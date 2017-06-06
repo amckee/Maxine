@@ -1,4 +1,5 @@
-import Security
+from lib import Security
+
 
 s = Security.Security()
 s.prove_existance()
