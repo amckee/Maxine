@@ -6,7 +6,7 @@ import time
 import getpass
 
 import numpy,pyaudio,math
-import tonegenerator
+from lib import ToneGenerator
 
 
 class OBD(object):
