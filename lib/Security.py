@@ -5,8 +5,9 @@ import time
 class Security(object):
     btn = Button(13)
     def __init__(self):
-        
-        print("Security imported")
+        #TODO: initialize sensors and recording devices
+        print("TODO: actually init security")
 
-    def prove_existance(self):
-        print("I exist!")
+    def start(self):
+        print("TODO: actually start security")
+
