@@ -2,17 +2,20 @@
 #import serial, platform
 #from datetime import datetime
 #import numpy, pyaudio, math
-#import tonegenerator
+from lib import ToneGenerator
 
 class Sounds(object):
     def __init__(self):
         #TODO: reimplement mysounds.py/obdrecorder.py
-        print("TODO: actually init sounds")
+        #TODO: import a library of available sounds
+        self.sounds = ['startup','stuck','crash','flip'] # these could be subdirs containing available sounds (i'm thinking pick one randomly to keep things interesting, and/or it'll make organizing sound themes easier)
+        print("TODO: init sounds")
 
     def play(self, event_name='start'):
-        #TODO: actually play the sound
         # lots to do here, but let's just
-        # start by playing start.wav directly.
-        # then we go dynamic/random with it.
-        print("TODO: actually play a sound")
+        # start by playing a sample wav directly.
+        # then we get fancy with it.
+        print("TODO: play a sound")
         
+    def start_engine(self):
+        print("TODO: start pd")

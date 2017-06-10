@@ -22,15 +22,17 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ###########################################################################
 
-import serial
-import string
-import time
+import serial, string, time
 from math import ceil
 from datetime import datetime
 
-from lib import obd_sensors
-
-from lib.obd_sensors import hex_to_int
+try:
+    from lib import obd_sensors
+    from lib.obd_sensors import hex_to_int
+except:
+    # this block is for when we're running directly for testing
+    import obd_sensors
+    from obd_sensors import hex_to_int
 
 GET_DTC_COMMAND   = "03"
 CLEAR_DTC_COMMAND = "04"

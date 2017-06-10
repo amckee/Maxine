@@ -1,8 +1,5 @@
-import numpy
-import pyaudio
-import math
- 
- 
+import numpy, pyaudio, math
+
 class ToneGenerator(object):
  
     def __init__(self, samplerate=44100, frames_per_buffer=4410):
