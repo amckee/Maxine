@@ -9,7 +9,12 @@ from datetime import datetime
 from bluezero import adapter
 
 class OBD(object):
-    mainadapter = "B8:27:EB:24:E3:49" # rpi3 built in bt dev addr
+    # TODO: setup a scanner/list of devs for dynamic setup
+    ## these IDs are for me; adjust yours accordingly
+    bt_devices = {}
+    bt_devices['rpi'] = "B8:27:EB:24:E3:49" # rpi3 built in bt dev addr
+    bt_devices['usb'] = "5C:F3:70:69:EF:9F" # usb bluetooth adapter addr
+    bt_devices['obd'] = "00:1D:A5:00:01:EB" # obd device
 
     def __init__(self):
         self.btdevice = self.find_bluetooth_device(self.mainadapter)

@@ -5,7 +5,7 @@ from lib import OBD
 class Maxine(object):
     security = Security.Security()
     sounds = Sounds.Sounds()
-    obd = OBD.OBD() #TODO: fix that bluetooth adapter to grab is hardcoded here
+    obd = OBD.OBD() #TODO: fix hardcoded bluetooth adapter address
     
     def __init__(self):
         self.security.start()

@@ -1,12 +1,24 @@
-from bluezero import adapter
+from gpiozero import Button
+from signal import pause
+import datetime
+import time
 
-btdevs = adapter.list_adapters()
-btdev = adapter.Adapter(btdevs[0]) # generally this is the built-in bluetooth device
-print( type(btdevs) )
-print( type(adapter.Adapter(btdevs[0]).address) )
+def btnPassengerClosed():
+    dt = datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S')
+    #t = time.time().strftime('%Y.%m.%d %H:%M:%S')
+    print("[%s] Passenger door closed" % dt)
 
-for btd in btdevs:
-    ad = adapter.Adapter(btd)
-    print("Adapter:")
-    print(ad.address)
-    print(ad.name)
+def btnPassengerOpened():
+    dt = datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S')
+    print("[%s] Passenger door opened" % dt)
+
+btnPassengerDoor = Button(13)
+
+dt = datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S')
+print(dt)
+
+btnPassengerDoor.when_pressed = btnPassengerClosed
+btnPassengerDoor.when_released = btnPassengerOpened
+print("awaiting door events...")
+
+pause()
