@@ -7,7 +7,7 @@ class Logger:
 
     def __init__(self, parent=""):
         # with the parent variable, we can better log details
-        if parent == "":
+        if type(parent) == str:
             self.parent = parent
         else:
             self.parent = type(parent).__name__
@@ -16,7 +16,4 @@ class Logger:
         if msg == "":
             return
         dt = datetime.datetime.now()
-        if self.parent == "":
-            print("[%s] %s" % (dt.strftime("%Y.%m.%d %H:%M:%S"), msg))
-        else:
-            print("[%s] %s: %s" % (dt.strftime("%Y.%m.%d %H:%M:%S"), self.parent, msg))
+        print("[%s] [%s]:\t%s" % (dt.strftime("%Y.%m.%d %H:%M:%S"), self.parent, msg))

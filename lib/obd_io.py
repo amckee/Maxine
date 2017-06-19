@@ -73,6 +73,9 @@ def decrypt_dtc_code(code):
 
 class OBDPort:
      """ OBDPort abstracts all communication with OBD-II device."""
+     def debug_display(self, notwin, numb, msg):
+         print(msg)
+         
      def __init__(self,portnum,_notify_window,SERTIMEOUT,RECONNATTEMPTS):
          """Initializes port by resetting device and gettings supported PIDs. """
          # These should really be set by the user.
@@ -86,19 +89,19 @@ class OBDPort:
          self.port = None
          
          self._notify_window=_notify_window
-         debug_display(self._notify_window, 1, "Opening interface (serial port)")
+         print("Opening interface (%s)" % portnum)
 
          try:
              self.port = serial.Serial(portnum,baud, \
-             parity = par, stopbits = sb, bytesize = databits,timeout = to)
+             parity = par, stopbits = sb, bytesize = databits, timeout = to)
              
          except serial.SerialException as e:
              print(e)
              self.State = 0
              return None
              
-         debug_display(self._notify_window, 1, "Interface successfully " + self.port.portstr + " opened")
-         debug_display(self._notify_window, 1, "Connecting to ECU...")
+         print("Interface successfully opened: %s" % self.port.portstr)
+         print("Connecting to ECU...")
          
          try:
             self.send_command("atz")   # initialize
@@ -112,9 +115,9 @@ class OBDPort:
             self.State = 0
             return None
          
-         debug_display(self._notify_window, 2, "atz response:" + self.ELMver)
+         print("atz response: %s" % self.ELMver)
          self.send_command("ate0")  # echo off
-         debug_display(self._notify_window, 2, "ate0 response:" + self.get_result())
+         print("ate0 response: %s" % self.get_result())
          self.send_command("0100")
          ready = self.get_result()
          
@@ -122,7 +125,7 @@ class OBDPort:
             self.State = 0
             return None
             
-         debug_display(self._notify_window, 2, "0100 response:" + ready)
+         print("0100 response: %s" % ready)
          return None
               
      def close(self):
@@ -137,13 +140,14 @@ class OBDPort:
 
      def send_command(self, cmd):
          """Internal use only: not a public interface"""
+         print(cmd)
          if self.port:
              self.port.flushOutput()
              self.port.flushInput()
              for c in cmd:
-                 self.port.write(c)
-             self.port.write("\r\n")
-             #debug_display(self._notify_window, 3, "Send command:" + cmd)
+                 self.port.write(bytes(c, 'UTF-8'))
+             self.port.write(bytes("\r\n", 'UTF-8'))
+             print("Send command: %s" % cmd)
 
      def interpret_result(self,code):
          """Internal use only: not a public interface"""
@@ -174,36 +178,12 @@ class OBDPort:
     
      def get_result(self):
          """Internal use only: not a public interface"""
-         #time.sleep(0.01)
-         repeat_count = 0
+         dat = None
          if self.port is not None:
-             buffer = ""
-             while 1:
-                 c = self.port.read(1)
-                 if len(c) == 0:
-                    if(repeat_count == 5):
-                        break
-                    print("Got nothing\n")
-                    repeat_count = repeat_count + 1
-                    continue
-                    
-                 if c == '\r':
-                    continue
-                    
-                 if c == ">":
-                    break;
-                     
-                 if buffer != "" or c != ">": #if something is in buffer, add everything
-                    buffer = buffer + c
-                    
-             #debug_display(self._notify_window, 3, "Get result:" + buffer)
-             if(buffer == ""):
-                return None
-             return buffer
-         else:
-            debug_display(self._notify_window, 3, "NO self.port!")
-         return None
-
+            dat = self.port.readline()
+            print("Data recieved: %s" % dat)
+         return dat
+         
      # get sensor value from command
      def get_sensor_value(self,sensor):
          """Internal use only: not a public interface"""

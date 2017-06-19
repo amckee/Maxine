@@ -1,8 +1,4 @@
-try:
-    from lib import obd_io, obd_sensors, obd_utils
-except ImportError:
-    import obd_io, obd_sensors, obd_utils
-    
+from lib import obd_io, obd_sensors, obd_utils
 import serial, platform, time
 import numpy,pyaudio,math
 from datetime import datetime
@@ -18,30 +14,37 @@ class OBD(object):
     bt_devices['obd'] = "00:1D:A5:00:01:EB" # obd device
 
     def __init__(self):
+        self.tonevalue = 0
+        self.port = None
+        self.sensorlist = []
         self.logger = Logger.Logger(self)
-        self.btdevice = self.find_bluetooth_device(self.bt_devices['rpi'])
-        if self.btdevice == False:
-            self.logger.log("TODO: proper handling. for now, 'error: no adapter id given'")
-        self.logger.log("TODO: init obd")
+        self.btdevice = self.find_bluetooth_device()
+        if self.btdevice == None:
+            self.logger.log("TODO: %s not found" % self.bt_devices['usb'])
+        else:
+            self.logger.log("btdevice: %s " % self.btdevice)
+
+    def connect(self):
+        self.port = obd_io.OBDPort(self.btdevice, None, 2, 2)
+        if(self.port.State == 0):
+            self.port.close()
+            self.port = None
 
     def find_bluetooth_device(self, adapter_id=None):
-        if adapter_id is None:
-            self.logger.log("FAIL: find_bluetooth_device")
-            return False
-        #iterate through all located bt adapters, set main
-        #bt dev when we find by matching id
-        btdevs = adapter.list_adapters()
-        for btd in btdevs:
-            a = adapter.Adapter(btd)
-            if a.address == self.bt_devices['rpi']:
-                self.btdev = a
-                #print("DEBUG: got requested device: %s @ %s" % (self.btdev.name, self.btdev.address))
-                break
+        """scan for available ports. return a list of serial names"""
+        available = []
+        # Enable Bluetooh connection
+        for i in range(5):
+          try:
+            s = serial.Serial("/dev/rfcomm"+str(i))
+            available.append( (str(s.port)))
+            s.close()   # explicit close 'cause of delayed GC in java
+          except serial.SerialException:
+            pass
+        return available
 
     def start(self):
         if self.btdevice is None:
             self.logger.log("Do not have OBD")
             return
-        self.logger.log("Got OBD: %s @ %s" % (self.btdevice.name, self.btddevice.address))
-        self.logger.log("Status: %s" % self.btdevice.status)
-        self.logger.log("TODO: connect to obd device")
+        self.logger.log("Got OBD serial device at: %s" % self.btdevice)
