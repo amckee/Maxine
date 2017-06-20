@@ -4,7 +4,7 @@ It will include OBD inputs to generate sound in real time, custom security, soun
 
 Using https://github.com/brendan-w/python-OBD.git for the OBD backend, 'cause it rocks.
 
-Currently there isn't much. This is really just to tie in my dev area on the Pi itself to the corresponding git repo.
+Currently there isn't much. This is really just to tie in my dev area on the Pi itself to the corresponding git repo. Some OBD events are functional, and I'm working to get things threaded and interconnected. (It's a long story.)
 
 Stay tuned! Or don't, I don't care. This is for me.
 
