@@ -1,13 +1,28 @@
 import obd
 
-con = obd.OBD() #auto connects to rfcomm0
+class MaxOBD(object):
 
-#res = con.query(obd.commands.ACCELERATOR_POS_D) # get details of specified sensor
-#print(res.value)
+    def __init__(self):
+        self.con = obd.OBD() #auto connects to rfcomm0
 
-print(con.query(obd.commands.COOLANT_TEMP).value.to('degF'))
-print(con.query(obd.commands.ENGINE_LOAD).value)
-print(con.query(obd.commands.RPM).value)
-print(con.query(obd.commands.SPEED).value.to('mph'))
-print(con.query(obd.commands.THROTTLE_POS).value)
+    def get_data(self, cmd):
+        return self.con.query(cmd)
 
+
+o = MaxOBD()
+
+print("Connection Details:")
+print("Connection: %s" % o.con.is_connected())
+print("Status: %s" % o.con.status())
+print("Con Status: %s" % o.get_data(obd.commands.STATUS))
+print()
+
+print("Voltages:")
+print("Module Voltage: %s" % o.get_data(obd.commands.CONTROL_MODULE_VOLTAGE))
+print("ELM Voltage: %s" % o.get_data(obd.commands.ELM_VOLTAGE))
+
+print("Basic Sensors:")
+print("TPS-A: %s" % o.get_data(obd.commands.THROTTLE_POS))
+print("TPS-B: %s" % o.get_data(obd.commands.THROTTLE_POS_B))
+print("TPS-C: %s" % o.get_data(obd.commands.THROTTLE_POS_C))
+print("Coolant Temp: %s" % o.get_data(obd.commands.COOLANT_TEMP))
