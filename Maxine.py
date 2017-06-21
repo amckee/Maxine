@@ -21,24 +21,40 @@ class Maxine(object):
         self.running = True # TODO: toggle based on gpio switch
         self.logger.log("Main init complete")
 
+    def clean_data(self, data):
+        if type(data) is str:
+            return data
+        else:
+            return str(data.value)
+
     def obd_loop(self):
         longnaps = 0
+        logdata = ""
         while self.running:
-            dat = self.obd.get_data(obd_values.THROTTLE_POS)
-            self.logger.log("TPS: %s" % dat.value)
-            if dat.value is None:
-                self.logger.log("Got 'none' data. Taking extra nap...")
-                longnaps = longnaps + 1
-                time.sleep(9)
-                if longnaps > 12:
-                    # we've been offline for 2m now, time to force restart bluetooth itself...
-                    self.logger.log("Restarting bluetooth (yes, it's an ugly hack)")
-                    # okay, look. i've been having kernel dumps occur stemming from the
-                    # bluetooth stack that cause the need for a reboot, and failing
-                    # anything else, a restart of bluetooth could mean reconnecting
-                    # with the obd device, so for now... why not?
-                    call(["sudo", "service", "bluetooth", "restart"])
-            time.sleep(1)
+            try:
+                # TPS for synthetic engine fx
+                dat = self.obd.get_data(obd_values.THROTTLE_POS)
+                print("TPS: %s" % str(dat))
+
+                # Other data values for Conky
+                dat = self.obd.get_data(obd_values.COOLANT_TEMP).value.to('degF')
+                logdata = self.clean_data(dat) + ","
+                dat = self.obd.get_data(obd_values.RPM).value
+                logdata = logdata + self.clean_data(dat) + ","
+                dat = self.obd.get_data(obd_values.SPEED).value.to('mph')
+                logdata = logdata + self.clean_data(dat) + ","
+                dat = self.obd.get_data(obd_values.ENGINE_LOAD)
+                logdata = logdata + self.clean_data(dat.value) + ","
+
+                # actually write the log data to a file
+                # TODO: see line above
+                print(logdata)
+                time.sleep(1)
+            except:
+                # for now we are assuming this means the engine is off, so sleep, reset, try again
+                self.logger.log("Having issues, OBD probably off. Taking long nap.")
+                time.sleep(10)
+                self.obd = MaxOBD.MaxOBD()
 
     def start(self):
         tSecurity = threading.Thread(target=self.security.start)
