@@ -8,7 +8,10 @@ class MaxOBD(object):
 
     def __init__(self):
         self.logger = Logger.Logger(self)
-        self.con = obd.OBD() #auto connects to rfcomm0
+        #self.logger.log("Establishing OBD Connection...")
+        #self.con = obd.OBD() #auto connects to rfcomm0
+        self.logger.log("Establishing Async OBD Connection...")
+        self.acon = obd.Async() # same as OBD() but with watchers
         self.logger.log("MaxOBD init completed")
 
     #def reset(self): #TODO: do we need this, or is there another way?
@@ -18,4 +21,3 @@ class MaxOBD(object):
         if dat.value is None:
             dat.value = "0"
         return dat
-

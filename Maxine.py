@@ -18,8 +18,18 @@ class Maxine(object):
         self.security = Security.Security()
         self.sounds = Sounds.Sounds()
         self.obd = MaxOBD.MaxOBD()
+        self.set_watchers()
         self.running = True # TODO: toggle based on gpio switch
         self.logger.log("Main init complete")
+
+    def set_watchers(self):
+        self.logger.log("Setting watchers...")
+        self.obd.acon.watch(obd_values.THROTTLE_POS)
+        self.obd.acon.watch(obd_values.COOLANT_TEMP)
+        self.obd.acon.watch(obd_values.RPM)
+        self.obd.acon.watch(obd_values.SPEED)
+        self.obd.acon.watch(obd_values.ENGINE_LOAD)
+        self.logger.log("Watchers set.")
 
     def clean_data(self, data):
         if type(data) is str:
@@ -34,7 +44,6 @@ class Maxine(object):
             try:
                 # TPS for synthetic engine fx
                 dat = self.obd.get_data(obd_values.THROTTLE_POS)
-                print("TPS: %s" % str(dat))
 
                 # Other data values for Conky
                 dat = self.obd.get_data(obd_values.COOLANT_TEMP).value.to('degF')
@@ -48,18 +57,22 @@ class Maxine(object):
 
                 # actually write the log data to a file
                 # TODO: see line above
-                print(logdata)
+                self.logger.log(logdata)
                 time.sleep(1)
             except:
-                # for now we are assuming this means the engine is off, so sleep, reset, try again
-                self.logger.log("Having issues, OBD probably off. Taking long nap.")
-                time.sleep(10)
+                # if getting the first data request failed, usually mains nothing will work                
+                # for now i am assuming this means the engine is off.
+                # as such, here we sleep, reset obd, try again
+                naptime = 10
+                self.logger.log("Having issues, OBD probably off. Taking %s second long nap." % naptime)
+                time.sleep(naptime)
+                self.logger.log("Resetting MaxOBD()")
                 self.obd = MaxOBD.MaxOBD()
 
     def start(self):
         tSecurity = threading.Thread(target=self.security.start)
         tOBD = threading.Thread(target=self.obd_loop)
-        #tSounds = threading.Thread(target=self.sounds.start_engine)
+        #tSounds = threading.Thread(target=self.sounds.)
         
         tSecurity.start()
         tOBD.start()
@@ -69,7 +82,7 @@ class Maxine(object):
         #tSecurity.join()
         #tSounds.join()
 
-        self.logger.log("Main start complete")
+        #self.logger.log("Main start complete")
 
 m = Maxine()
 m.start()

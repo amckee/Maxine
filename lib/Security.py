@@ -4,6 +4,7 @@ import time, datetime
 from lib import Logger
 
 class Security(object):
+    #TODO: USB cams, mics, tilt sensor, pressure sensors, etc
     btnPassenger = Button(13) #passenger door
     btnDriver = Button(14) #driver door
 
