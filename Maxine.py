@@ -15,6 +15,7 @@ class Maxine(object):
     
     def __init__(self):
         self.logger = Logger.Logger(self)
+        self.logger.log_to_file('/dev/shm/jeep_obd.log')
         self.security = Security.Security()
         self.sounds = Sounds.Sounds()
         self.obd = MaxOBD.MaxOBD()
@@ -63,7 +64,7 @@ class Maxine(object):
                 # if getting the first data request failed, usually mains nothing will work                
                 # for now i am assuming this means the engine is off.
                 # as such, here we sleep, reset obd, try again
-                naptime = 10
+                naptime = 30
                 self.logger.log("Having issues, OBD probably off. Taking %s second long nap." % naptime)
                 time.sleep(naptime)
                 self.logger.log("Resetting MaxOBD()")
