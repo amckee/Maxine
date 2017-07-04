@@ -2,6 +2,7 @@ from lib import Security
 from lib import Sounds
 from lib import Logger
 from lib import MaxOBD
+#from lib import Notifications
 import threading, time
 from subprocess import call
 
@@ -18,19 +19,12 @@ class Maxine(object):
         self.logger.log_to_file('/dev/shm/jeep_obd.log')
         self.security = Security.Security()
         self.sounds = Sounds.Sounds()
-        self.obd = MaxOBD.MaxOBD()
-        self.set_watchers()
-        self.running = True # TODO: toggle based on gpio switch
+        self.running = True # TODO: toggle based on gpio switch to ignition (radio?) wire
         self.logger.log("Main init complete")
 
-    def set_watchers(self):
-        self.logger.log("Setting watchers...")
-        self.obd.acon.watch(obd_values.THROTTLE_POS)
-        self.obd.acon.watch(obd_values.COOLANT_TEMP)
-        self.obd.acon.watch(obd_values.RPM)
-        self.obd.acon.watch(obd_values.SPEED)
-        self.obd.acon.watch(obd_values.ENGINE_LOAD)
-        self.logger.log("Watchers set.")
+    def _nap(self, naptime=10):
+        self.logger.log("Taking %ss nap." % naptime)
+        time.sleep(naptime)
 
     def clean_data(self, data):
         if type(data) is str:
@@ -39,11 +33,12 @@ class Maxine(object):
             return str(data.value)
 
     def obd_loop(self):
+        self.obd = MaxOBD.MaxOBD()
         longnaps = 0
         logdata = ""
         while self.running:
             try:
-                # TPS for synthetic engine fx
+                # throttle position sensor for synthetic engine fx
                 dat = self.obd.get_data(obd_values.THROTTLE_POS)
 
                 # Other data values for Conky
@@ -56,6 +51,8 @@ class Maxine(object):
                 dat = self.obd.get_data(obd_values.ENGINE_LOAD)
                 logdata = logdata + self.clean_data(dat.value) + ","
 
+                # TODO: warnings/engine error code notifications
+
                 # actually write the log data to a file
                 # TODO: see line above
                 self.logger.log(logdata)
@@ -64,15 +61,14 @@ class Maxine(object):
                 # if getting the first data request failed, usually mains nothing will work                
                 # for now i am assuming this means the engine is off.
                 # as such, here we sleep, reset obd, try again
-                naptime = 30
-                self.logger.log("Having issues, OBD probably off. Taking %s second long nap." % naptime)
-                time.sleep(naptime)
-                self.logger.log("Resetting MaxOBD()")
-                self.obd = MaxOBD.MaxOBD()
+                self.logger.log("Having OBD issues, which means the vehicle is probably off.")
+                # TODO: output error details
+                self.obd.reset()
+                self._nap(30) # TODO: use power signal as switch for vehicle 'on/off'
 
     def start(self):
-        tSecurity = threading.Thread(target=self.security.start)
         tOBD = threading.Thread(target=self.obd_loop)
+        tSecurity = threading.Thread(target=self.security.start)
         #tSounds = threading.Thread(target=self.sounds.)
         
         tSecurity.start()

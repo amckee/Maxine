@@ -4,9 +4,17 @@ import time, datetime
 from lib import Logger
 
 class Security(object):
-    #TODO: USB cams, mics, tilt sensor, pressure sensors, etc
-    btnPassenger = Button(13) #passenger door
-    btnDriver = Button(14) #driver door
+    # TODO: USB cams, mics, tilt sensor, pressure sensors, etc
+    # TODO: sms/email/lights on certain events
+    btnPassenger = Button(13) # passenger door
+    btnDriver = Button(14) # driver door
+
+    def __init__(self):
+        self.logger = Logger.Logger(self)
+        self.btnPassenger.when_released = self.door_open
+        self.btnDriver.when_released = self.door_open
+        self.btnPassenger.when_pressed = self.door_closed
+        self.btnDriver.when_pressed = self.door_closed
 
     def door_open(self, btn):
         if btn == self.btnPassenger:
@@ -19,13 +27,6 @@ class Security(object):
             self.logger.log("Passenger door closed")
         elif btn == self.btnDriver:
             self.logger.log("Driver door closed")
-
-    def __init__(self):
-        self.logger = Logger.Logger(self)
-        self.btnPassenger.when_released = self.door_open
-        self.btnDriver.when_released = self.door_open
-        self.btnPassenger.when_pressed = self.door_closed
-        self.btnDriver.when_pressed = self.door_closed
 
     def start(self):
         self.logger.log("Listening for door events...")
