@@ -1,12 +1,14 @@
 from lib import Security
 from lib import Sounds
-from lib import Logger
 from lib import MaxOBD
-import threading, time
+import threading, time, logging
 from subprocess import call
 
 # pip3 install obd
 from obd import commands as obd_values
+
+logging.basicConfig( format='[%(asctime)s] %(message)s' )
+logger = logging.getLogger(__name__)
 
 class Maxine(object):
     # main class for the AI 'brain'.
@@ -14,12 +16,12 @@ class Maxine(object):
     # input data (mainly from obd) to subsystems
     
     def __init__(self):
-        self.logger = Logger.Logger(self)
+        logger.info("Maxine::init")
         self.security = Security.Security()
         self.sounds = Sounds.Sounds()
         self.obd = MaxOBD.MaxOBD()
+        #logging.basicConfig( filename='/dev/shm/jeepobd.log' )
         self.running = True # TODO: toggle based on gpio switch
-        self.logger.log("Main init complete")
 
     def clean_data(self, data):
         if type(data) is str:
@@ -32,29 +34,18 @@ class Maxine(object):
         logdata = ""
         while self.running:
             try:
-                # TPS for synthetic engine fx
-                dat = self.obd.get_data(obd_values.THROTTLE_POS)
-                print("TPS: %s" % str(dat))
-
-                # Other data values for Conky
-                dat = self.obd.get_data(obd_values.COOLANT_TEMP).value.to('degF')
-                logdata = self.clean_data(dat) + ","
-                dat = self.obd.get_data(obd_values.RPM).value
-                logdata = logdata + self.clean_data(dat) + ","
-                dat = self.obd.get_data(obd_values.SPEED).value.to('mph')
-                logdata = logdata + self.clean_data(dat) + ","
-                dat = self.obd.get_data(obd_values.ENGINE_LOAD)
-                logdata = logdata + self.clean_data(dat.value) + ","
-
-                # actually write the log data to a file
-                # TODO: see line above
-                print(logdata)
-                time.sleep(1)
+                self.obd = MaxOBD.MaxOBD()
+                if self.obd.is_connected():
+                    self.obd.start()
+                else:
+                    logger.warning("Connection to OBD failed. Sleeping, and trying again.")
+                    self.obd.stop()
+                    time.sleep(10)
             except:
                 # for now we are assuming this means the engine is off, so sleep, reset, try again
-                self.logger.log("Having issues, OBD probably off. Taking long nap.")
+                logger.error("Having issues, OBD probably off. Taking long nap.")
                 time.sleep(10)
-                self.obd = MaxOBD.MaxOBD()
+                self.obd.stop()
 
     def start(self):
         tSecurity = threading.Thread(target=self.security.start)
@@ -68,8 +59,6 @@ class Maxine(object):
 
         #tSecurity.join()
         #tSounds.join()
-
-        self.logger.log("Main start complete")
 
 m = Maxine()
 m.start()
