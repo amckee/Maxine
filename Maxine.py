@@ -9,18 +9,17 @@ from obd import commands as obd_values
 
 logging.basicConfig( format='[%(asctime)s] %(message)s' )
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+#logging.basicConfig( filename='/dev/shm/jeepobd.log' )
 
 class Maxine(object):
     # main class for the AI 'brain'.
-    # this manages all subclasses, and distributes
-    # input data (mainly from obd) to subsystems
-    
+
     def __init__(self):
-        logger.info("Maxine::init")
+        logger.info("Maxine::init()")
         self.security = Security.Security()
         self.sounds = Sounds.Sounds()
         self.obd = MaxOBD.MaxOBD()
-        #logging.basicConfig( filename='/dev/shm/jeepobd.log' )
         self.running = True # TODO: toggle based on gpio switch
 
     def clean_data(self, data):
@@ -30,26 +29,24 @@ class Maxine(object):
             return str(data.value)
 
     def obd_loop(self):
+        logger.info("Maxine::obd_loop()")
+        naptime = 10
         longnaps = 0
         logdata = ""
         while self.running:
-            try:
-                self.obd = MaxOBD.MaxOBD()
-                if self.obd.is_connected():
-                    self.obd.start()
-                else:
-                    logger.warning("Connection to OBD failed. Sleeping, and trying again.")
-                    self.obd.stop()
-                    time.sleep(10)
-            except:
-                # for now we are assuming this means the engine is off, so sleep, reset, try again
-                logger.error("Having issues, OBD probably off. Taking long nap.")
-                time.sleep(10)
+            self.obd = MaxOBD.MaxOBD()
+                        
+            if self.obd.con.is_connected():
+                self.obd.start()
+            else:
+                logger.warning("Connection to OBD failed. Sleeping, and trying again.")
                 self.obd.stop()
+                time.sleep(naptime)
 
     def start(self):
+        logger.info("Maxine::start()")
         tSecurity = threading.Thread(target=self.security.start)
-        tOBD = threading.Thread(target=self.obd_loop)
+        tOBD = threading.Thread(target=self.obd.start)
         #tSounds = threading.Thread(target=self.sounds.start_engine)
         
         tSecurity.start()
