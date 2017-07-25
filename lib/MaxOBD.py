@@ -1,10 +1,12 @@
 from obd import OBDStatus
 import obd, logging, os.path, subprocess, time
+from serial.serialutil import SerialException
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-stop = False
+async = False # run with async setup / set to false for comparing to non async method
+stop = False # set this to true at any time to stop the main loop
 
 class MaxOBD(object):
     # Note to self: how to run a query
@@ -38,7 +40,8 @@ class MaxOBD(object):
 
     def ensure_obd_device(self):
         logger.info("MaxOBD::ensure_obd_device()")
-        #ensure OBD device
+        #ensure OBD device exists and is connected
+        ## return true for success, false for failure
         if not os.path.exists( '/dev/rfcomm0' ):
             logger.warning("/dev/rfcomm0 not found. Attempting to bind...")
             self.bind_bluetooth()
@@ -48,6 +51,8 @@ class MaxOBD(object):
                 logger.info("/dev/rfcomm0 found; opening connection...")
                 self.con = obd.Async() #actually start obd communications
                 return True
+            except SerialException:
+                logger.error("Device reports readiness to read but returned no data.")
             except:
                 logger.error("Failed to connect to OBD.")
                 return False
