@@ -1,7 +1,9 @@
 from gpiozero import Button
 from signal import pause
-import time, datetime
-from lib import Logger
+import logging, time, datetime
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class Security(object):
     btnPassenger = Button(13) #passenger door
@@ -9,23 +11,26 @@ class Security(object):
 
     def door_open(self, btn):
         if btn == self.btnPassenger:
-            self.logger.log("Passenger door opened")
+            logger.info("Passenger door opened")
         elif btn == self.btnDriver:
-            self.logger.log("Driver door opened")
+            logger.info("Driver door opened")
 
     def door_closed(self, btn):
         if btn == self.btnPassenger:
-            self.logger.log("Passenger door closed")
+            logger.info("Passenger door closed")
         elif btn == self.btnDriver:
-            self.logger.log("Driver door closed")
+            logger.info("Driver door closed")
 
-    def __init__(self):
-        self.logger = Logger.Logger(self)
+    def setup_door_events(self):
         self.btnPassenger.when_released = self.door_open
         self.btnDriver.when_released = self.door_open
         self.btnPassenger.when_pressed = self.door_closed
         self.btnDriver.when_pressed = self.door_closed
 
+    def __init__(self):
+        logger.info("Security::init()")
+        #self.setup_door_events() # doors have reverse polarity switches. this drains the battery. going to have to find another way to do this
+        
     def start(self):
-        self.logger.log("Listening for door events...")
+        logger.info("Listening for door events...")
         pause()

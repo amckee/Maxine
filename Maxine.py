@@ -7,7 +7,7 @@ from subprocess import call
 # pip3 install obd
 from obd import commands as obd_values
 
-logging.basicConfig( format='[%(asctime)s] %(message)s' )
+logging.basicConfig( format='[%(asctime)s] %(name)-12s %(message)s' )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 #logging.basicConfig( filename='/dev/shm/jeepobd.log' )
@@ -27,21 +27,6 @@ class Maxine(object):
             return data
         else:
             return str(data.value)
-
-    def obd_loop(self):
-        logger.info("Maxine::obd_loop()")
-        naptime = 10
-        longnaps = 0
-        logdata = ""
-        while self.running:
-            self.obd = MaxOBD.MaxOBD()
-                        
-            if self.obd.con.is_connected():
-                self.obd.start()
-            else:
-                logger.warning("Connection to OBD failed. Sleeping, and trying again.")
-                self.obd.stop()
-                time.sleep(naptime)
 
     def start(self):
         logger.info("Maxine::start()")

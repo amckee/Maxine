@@ -3,11 +3,14 @@
 #from datetime import datetime
 #import numpy, pyaudio, math
 from lib import ToneGenerator
-from lib import Logger
-import time
+import logging, time
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class Sounds(object):
     def __init__(self):
+        logger.info("Sounds::init()")
         #TODO: reimplement mysounds.py/obdrecorder.py
         #TODO: import a library of available sounds
 
@@ -16,17 +19,15 @@ class Sounds(object):
         # to keep things interesting, and/or it'll make
         # organizing sound themes easier)
         self.sounds = ['startup','stuck','crash','flip','bump']
-
-        self.logger = Logger.Logger(self)
-        self.logger.log("TODO: init sounds")
+        logger.info("TODO: init sounds")
 
     def play(self, event_name=''):
         # lots to do here, but let's just
         # start by playing a sample wav directly.
         # then we get fancy with it.
-        self.logger.log("play %s" % event_name)
+        logger.info("play %s" % event_name)
         
     def start_engine(self):
         #time.sleep(10) # give radio time to be 'on'
         self.play(event_name='startup')
-        self.logger.log("TODO: start pd")
+        logger.info("TODO: start pd")

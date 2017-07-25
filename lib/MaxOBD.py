@@ -1,8 +1,10 @@
 from obd import OBDStatus
-import obd, logging, os.path, subprocess
+import obd, logging, os.path, subprocess, time
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+stop = False
 
 class MaxOBD(object):
     # Note to self: how to run a query
@@ -25,6 +27,7 @@ class MaxOBD(object):
 
     def stop(self):
         logger.info("MaxOBD::stop()")
+        stop = True
         if self.con is not False:
             self.con.stop()
             self.con.unwatch_all()
@@ -42,17 +45,21 @@ class MaxOBD(object):
 
         if os.path.exists( '/dev/rfcomm0' ):
             try:
-                self.con = obd.Async()
+                logger.info("/dev/rfcomm0 found; opening connection...")
+                self.con = obd.Async() #actually start obd communications
+                return True
             except:
                 logger.error("Failed to connect to OBD.")
-                return
-            if self.con.status() == OBDStatus.CAR_CONNECTED:
-                logger.info("Connection to car successful")
-                return True
-            elif self.con.status() == OBDStatus.ELM_CONNECTED:
-                logger.error("Connection to ELM succeeded, connection to car failed")
-            else:
-                logger.error("Failed to connect to anything. Is car on?")
+                return False
+
+            ## lets get picky later
+            #if self.con.status() == OBDStatus.CAR_CONNECTED:
+            #    logger.info("Connection to car successful")
+            #    return True
+            #elif self.con.status() == OBDStatus.ELM_CONNECTED:
+            #    logger.error("Connection to ELM succeeded, connection to car failed")
+            #else:
+            #    logger.error("Failed to connect to anything. Is car on?")
         else:
             logger.error("/dev/rfcomm0 does not exist!")
             self.con = False
@@ -70,12 +77,22 @@ class MaxOBD(object):
 
     def start(self):
         logger.info("MaxOBD::start()")
+        naptime = 10
 
-        if not self.ensure_obd_device():
-            logger.error("Failed to connect to OBD.")
-            return False
-
-        self.set_watchers()
-        
-        self.con.start()
+        while not stop:
+            if not self.ensure_obd_device():
+                logger.info("Assuming engine is off. Taking a %ds long nap, then trying again." % naptime)
+                try:
+                    # if there's no 'con' object, this throws an AttributeError
+                    # doing this anyways to be sure this thing is done
+                    time.sleep(1)
+                    self.con.stop()
+                except:
+                    logger.warning("Attempted to stop undefined obd connection.")
+                time.sleep(naptime)
+                continue
+            else:
+                self.set_watchers()
+                self.con.start()
+                
         logger.info("MaxOBD started")
