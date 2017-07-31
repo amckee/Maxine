@@ -1,28 +1,26 @@
 import obd
 
-class MaxOBD(object):
+logfile = "/dev/shm/jeep_obd.log"
+con = obd.OBD()
 
-    def __init__(self):
-        self.con = obd.OBD() #auto connects to rfcomm0
-
-    def get_data(self, cmd):
-        return self.con.query(cmd)
-
-
-o = MaxOBD()
+def get_data(cmd):
+    return con.query(cmd)
 
 print("Connection Details:")
-print("Connection: %s" % o.con.is_connected())
-print("Status: %s" % o.con.status())
-print("Con Status: %s" % o.get_data(obd.commands.STATUS))
+print("Connection: %s" % con.is_connected())
+print("Status: %s" % con.status())
+print("Connection Status: %s" % get_data(obd.commands.STATUS))
 print()
 
-print("Voltages:")
-print("Module Voltage: %s" % o.get_data(obd.commands.CONTROL_MODULE_VOLTAGE))
-print("ELM Voltage: %s" % o.get_data(obd.commands.ELM_VOLTAGE))
-
 print("Basic Sensors:")
-print("TPS-A: %s" % o.get_data(obd.commands.THROTTLE_POS))
-print("TPS-B: %s" % o.get_data(obd.commands.THROTTLE_POS_B))
-print("TPS-C: %s" % o.get_data(obd.commands.THROTTLE_POS_C))
-print("Coolant Temp: %s" % o.get_data(obd.commands.COOLANT_TEMP))
+print("TPS-A: %s" % get_data(obd.commands.THROTTLE_POS))
+print("TPS-B: %s" % get_data(obd.commands.THROTTLE_POS_B))
+print("TPS-C: %s" % get_data(obd.commands.THROTTLE_POS_C))
+print("Coolant Temp: %s" % get_data(obd.commands.COOLANT_TEMP))
+print("RPM: %s" % get_data(obd.commands.RPM))
+
+print("Load: %s" % con.query(obd.commands.ABSOLUTE_LOAD))
+
+f = open( logfile, 'w' )
+f.write( "0,0,0,0,0,0\n" )
+f.close()

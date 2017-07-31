@@ -4,6 +4,7 @@ from serial.serialutil import SerialException
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+#logger.basicConfig( filename='/dev/shm/jeepobd.log' )
 
 async = False # run with async setup / set to false for comparing to non async method
 stop = False # set this to true at any time to stop the main loop
@@ -52,7 +53,7 @@ class MaxOBD(object):
                 self.con = obd.Async() #actually start obd communications
                 return True
             except SerialException:
-                logger.error("Device reports readiness to read but returned no data.")
+                logger.error("Serial exception in MaxOBD::ensure_obd_device()")
             except:
                 logger.error("Failed to connect to OBD.")
                 return False
@@ -93,7 +94,7 @@ class MaxOBD(object):
                     time.sleep(1)
                     self.con.stop()
                 except:
-                    logger.warning("Attempted to stop undefined obd connection.")
+                    pass
                 time.sleep(naptime)
                 continue
             else:

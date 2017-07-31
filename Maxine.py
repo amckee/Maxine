@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from lib import Security
 from lib import Sounds
 from lib import MaxOBD
@@ -7,20 +9,22 @@ from subprocess import call
 # pip3 install obd
 from obd import commands as obd_values
 
-logging.basicConfig( format='[%(asctime)s] %(name)-12s %(message)s' )
+formatter = logging.Formatter('[%(asctime)s] %(name)-12s %(message)s')
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-#logging.basicConfig( filename='/dev/shm/jeepobd.log' )
+hdlr = logging.FileHandler('/dev/shm/maxine.log')
+hdlr.setFormatter(formatter)
+logger.addHandler(hdlr) 
 
 class Maxine(object):
     # main class for the AI 'brain'.
 
     def __init__(self):
         logger.info("Maxine::init()")
-        self.security = Security.Security()
-        self.sounds = Sounds.Sounds()
+        #self.security = Security.Security()
+        #self.sounds = Sounds.Sounds()
         self.obd = MaxOBD.MaxOBD()
-        self.running = True # TODO: toggle based on gpio switch
+        #self.running = True # TODO: toggle based on gpio switch
 
     def clean_data(self, data):
         if type(data) is str:
@@ -30,11 +34,11 @@ class Maxine(object):
 
     def start(self):
         logger.info("Maxine::start()")
-        tSecurity = threading.Thread(target=self.security.start)
+        #tSecurity = threading.Thread(target=self.security.start)
         tOBD = threading.Thread(target=self.obd.start)
         #tSounds = threading.Thread(target=self.sounds.start_engine)
         
-        tSecurity.start()
+        #tSecurity.start()
         tOBD.start()
         #time.sleep(.2) #prevent logging from mixing
         #tSounds.start()
