@@ -1,6 +1,8 @@
 from obd import OBDStatus
 import obd, logging, os.path, subprocess, time
 from serial.serialutil import SerialException
+from bluetooth import *
+import bluetooth
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -9,6 +11,10 @@ logger.setLevel(logging.INFO)
 async = False # run with async setup / set to false for comparing to non async method
 stop = False # set this to true at any time to stop the main loop
 
+obd_name = "OBDII"
+obd_addr = None
+#obd_addr = "00:1D:A5:00:01:EB"
+
 class MaxOBD(object):
     # Note to self: how to run a query
     # data = obd.OBD().query(obd.commands.RPM).value.to('mph')
@@ -16,11 +22,61 @@ class MaxOBD(object):
 
     def __init__(self):
         logger.info("MaxOBD::init()")
+        self.obd_name = obd_name
+        self.obd_addr = obd_addr
+
+    def find_obd_device(self):
+        logger.info("MaxOBD::find_obd_device()")
+        ## scan for devices with 'OBDII' as the name
+        ## return bluetooth address if found, return None if not found
+        addr = None
+        logger.info("Scanning for all nearby bluetooth devices...")
+        nearby_devices = bluetooth.discover_devices()
+        logger.info("Found %s devices nearby" % len(nearby_devices))
+        if len(nearby_devices) == 0:
+            logger.info("No devices found of any kind")
+        else:
+            for device in nearby_devices:
+                if self.obd_name == bluetooth.lookup_name(device):
+                    addr = device
+                    break
+        return addr
 
     def bind_bluetooth(self):
         logger.info("MaxOBD::bind_bluetooth()")
-        logger.info("TODO: implement device connection management in python")
-        subprocess.call("/home/pi/bin/Maxine/utils/connect_obd.sh")
+        try:
+            self.btsock.close()
+        except:
+            pass
+        if self.obd_addr == None:
+            logger.info("Do not have %s address" % self.obd_name)
+            btaddr = self.find_obd_device()
+            if btaddr is None:
+                logger.info("Could not find %s device" % self.obd_name)
+                return False
+            else:
+                logger.info("Found %s device at %s" % (self.obd_name, btaddr))
+                self.obd_addr = btaddr
+        else:
+            logger.info("%s device known to be at %s" % (self.obd_name,self.obd_addr))
+
+        try:
+            logger.info("Connecting to %s at %s" % (self.obd_name, self.obd_addr))
+            self.btsock = BluetoothSocket( RFCOMM )
+            # 0 = 'Invalid argument'
+            # 1 = <no message>
+            # 2 = 'Connection reset by peer'
+            # 3 = 'Connection reset by peer'
+            # 4 = 'Connection reset by peer'
+            # 5 = 'Connection reset by peer'
+            self.btsock.connect((self.obd_addr, 1))
+        except Exception as e:
+            logger.info("Failed to connect to %s device at %s" % (self.obd_name,self.obd_addr))
+            logger.info("Error details: %s" % e)
+            return False
+        logger.info("Should be connected to %s at %s" % (self.obd_name,self.obd_addr))
+        return True
+        
 
     def get_data(self, obdcmd):
         dat = self.con.query(obdcmd)
@@ -30,75 +86,154 @@ class MaxOBD(object):
 
     def stop(self):
         logger.info("MaxOBD::stop()")
-        stop = True
-        if self.con is not False:
-            self.con.stop()
-            self.con.unwatch_all()
-            self.con.close()
-            logger.info("MaxOBD stopped")
-        else:
-            logger.info("MaxOBD has no connection")
 
+        #this is ugly. is there a better way?
+        try:
+            self.con.stop()
+        except:
+            pass
+        try:
+            self.con.unwatch_all()
+        except:
+            pass
+        try:
+            self.con.close()
+        except:
+            pass
+        try:
+            self.btsock.close()
+        except:
+            pass
+
+        logger.info("MaxOBD stopped")
+        
     def ensure_obd_device(self):
         logger.info("MaxOBD::ensure_obd_device()")
-        #ensure OBD device exists and is connected
+        # ensure OBD device exists and is connected
         ## return true for success, false for failure
-        if not os.path.exists( '/dev/rfcomm0' ):
-            logger.warning("/dev/rfcomm0 not found. Attempting to bind...")
-            self.bind_bluetooth()
 
-        if os.path.exists( '/dev/rfcomm0' ):
-            try:
-                logger.info("/dev/rfcomm0 found; opening connection...")
-                self.con = obd.Async() #actually start obd communications
+        # if this fails, we need to do a reconnect
+        try:
+            if self.con.is_connected():
+                logger.info("OBD has a connection")
                 return True
-            except SerialException:
-                logger.error("Serial exception in MaxOBD::ensure_obd_device()")
-            except:
-                logger.error("Failed to connect to OBD.")
-                return False
+            else:
+                logger.info("OBD is not connected")
+                self.con = obd.Async()
+        except Exception as e:
+            logger.info("Failed to run self.con.is_connected():")
+            logger.info(e)
+            logger.info("Attempting connect to %s..." % self.obd_addr)
+            if self.bind_bluetooth():
+                logger.info("Opening OBD connection...")
+                self.con = obd.Async()
+            return False #so we can try again on the next loop
+                
 
-            ## lets get picky later
-            #if self.con.status() == OBDStatus.CAR_CONNECTED:
-            #    logger.info("Connection to car successful")
-            #    return True
-            #elif self.con.status() == OBDStatus.ELM_CONNECTED:
-            #    logger.error("Connection to ELM succeeded, connection to car failed")
-            #else:
-            #    logger.error("Failed to connect to anything. Is car on?")
+        constat = None
+        try:
+            constat = self.con.status()
+        except Exception as e:
+            logger.info("Failed to pull connection status:")
+            logger.info(e)
+            logger.info("Attempting re-bind...")
+            if self.bind_bluetooth():
+                logger.info("Opening OBD connection...")
+                self.con = obd.Async()
+            return False #so we can try again on the next loop
+
+        try:
+            # handle the various connection states
+            ## running this in try block due to self.con
+            ## not always existing, so failback to reconnecting
+            if constat == obd.OBDStatus.CAR_CONNECTED:
+                logger.info("Existing connection detected")
+                return True
+            elif self.con.status() == obd.OBDStatus.ELM_CONNECTED:
+                logger.info("Connected to ELM but not car")
+                return False
+            elif self.con.status() == obd.OBDStatus.NOT_CONNECTED:
+                #logger.info("No Connection found. Attempting to create one...")
+                logger.info("No Connection found")
+                return False
+##                if os.path.exists( '/dev/rfcomm0' ):
+##                    logger.info("Found /dev/rfcomm0 so attempting to bind...")
+##                    self.con = obd.Async()
+##                    self.ensure_obd_device()
+##                else:
+##                    logger.info("Did not find /dev/rfcomm0 so attempting bluetooth rebind...")
+##                    self.bind_bluetooth()
+##                    self.con = obd.Async()
+##                    self.ensure_obd_device()
+        except Exception as e:
+            logger.info("Caught exception: %s" % e)
+            return False
+        return True
+
+    ## callbacks
+    def new_coolant_temp(self, temp):
+        if temp is None:
+            print("temp is none!")
         else:
-            logger.error("/dev/rfcomm0 does not exist!")
-            self.con = False
-        return False
+            tval = 0
+            try:
+                tval = temp.value.to('degF').magnitude
+            except AttributeError:
+                logger.error("Caught NoneType in new_coolant_temp()")
+                ## NoneType indicates the engine is now off.
+                self.reset_connection()
+            logger.info("Coolant temp: %s" % tval)
+
+    def new_load(self, load):
+        if load is None:
+            print("load is none!")
+        else:
+            lval = 0
+            try:
+                lval = load.value.magnitude
+            except AttributeError:
+                logger.error("Caught NoneType in new_load()")
+                ## NoneType indicates the engine is now off.
+                self.reset_connection()
+            logger.info("Engine load: %s" % lval)
+            
+    def new_rpm(self, rpm):
+        if rpm is None:
+            print("RPM is none!")
+        else:
+            rval = 0
+            try:
+                rval = rpm.value.magnitude
+            except AttributeError:
+                logger.error("Caught NoneType in new_rpm()")
+                ## NoneType indicates the engine is now off.
+                self.reset_connection()
+            logger.info("RPM: %s" % rval)
+    ## end callbacks
 
     def set_watchers(self):
         logger.info("MaxOBD::set_watchers()")
-        self.con.watch(obd.commands.COOLANT_TEMP, force=True)
-        self.con.watch(obd.commands.ENGINE_LOAD, force=True)
-        self.con.watch(obd.commands.OIL_TEMP, force=True)
-        self.con.watch(obd.commands.RPM, force=True)
-        self.con.watch(obd.commands.SPEED, force=True)
-        self.con.watch(obd.commands.THROTTLE_POS, force=True)
-        self.con.watch(obd.commands.TIMING_ADVANCE, force=True)
+        self.con.watch(obd.commands.COOLANT_TEMP, force=True, callback=self.new_coolant_temp)
+        self.con.watch(obd.commands.ENGINE_LOAD, force=True, callback=self.new_load)
+        self.con.watch(obd.commands.RPM, force=True, callback=self.new_rpm)
+        #self.con.watch(obd.commands.SPEED, force=True)
+        #self.con.watch(obd.commands.THROTTLE_POS, force=True)
+        #self.con.watch(obd.commands.TIMING_ADVANCE, force=True)
+
+    def reset_connection(self):
+        logger.info("MaxOBD::reset_connection()")
+        self.stop()
+        naptime = 10
+        while not self.ensure_obd_device():
+                logger.info("Assuming engine is off. Taking a %ds long nap, then trying again." % naptime)
+                self.stop()
+                time.sleep(naptime)
 
     def start(self):
         logger.info("MaxOBD::start()")
-        naptime = 10
-
-        while not stop:
-            if not self.ensure_obd_device():
-                logger.info("Assuming engine is off. Taking a %ds long nap, then trying again." % naptime)
-                try:
-                    # if there's no 'con' object, this throws an AttributeError
-                    # doing this anyways to be sure this thing is done
-                    time.sleep(1)
-                    self.con.stop()
-                except:
-                    pass
-                time.sleep(naptime)
-                continue
-            else:
-                self.set_watchers()
-                self.con.start()
+        self.reset_connection()
+        logger.info("MaxOBD::start()::Finally got connection. Starting OBD...")
+        self.set_watchers()
+        self.con.start()
                 
         logger.info("MaxOBD started")
