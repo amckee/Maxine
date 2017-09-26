@@ -17,13 +17,14 @@ Ideas in the works:
  - General engine data displays/reporting
  - Webcam motion detection while vehicle is off
    - Accessible via network, if connected
-   - Late night warnings via push/sms notification
+   - Event warnings via push/sms notification
  - Connect to known APs automatically
    - If no known AP found, become one
  - Generate synthetic sound effects based on engine data, output to stereo
  - Media capabilities, I suppose. People love their media.
  - Additional sensor data via GPIO
    - Door switches
+     - Event warnings via push/sms
    - Tilt sensor
  - Scan for bugged fuel pumps and issue warning if found
    - Going to be based on https://github.com/sparkfunX/Skimmer_Scanner
