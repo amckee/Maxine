@@ -1,7 +1,7 @@
 Quickstart:
-# sudo apt-get install portaudio19-dev
-# sudo pip3 install pyaudio
-# sudo pip3 install obd
+- apt-get install portaudio19-dev
+- pip3 install pyaudio
+- pip3 install obd
 
 This is a project designed to handle all the things I would like to add to the Raspberry Pi in my vehicle.
 
