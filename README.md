@@ -27,6 +27,12 @@ Ideas in the works:
    - Tilt sensor
  - Scan for bugged fuel pumps and issue warning if found
    - Going to be based on https://github.com/sparkfunX/Skimmer_Scanner
+ - Wise cracking GPS
+ - AI based backseat driver
+ - Sound FX for various driving events
+   - Hit brakes, play https://www.youtube.com/watch?v=6OjUE5FAN0E
+   - Hit gas, play https://www.youtube.com/watch?v=NahjHrIHp20
+   - Hit wall, play https://www.youtube.com/watch?v=5CsyGe4F8CQ
 
 Stay tuned! Or don't, I don't care. This is for me.
 
