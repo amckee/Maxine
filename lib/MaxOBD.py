@@ -17,8 +17,7 @@ obd_addr = None
 
 class MaxOBD(object):
     # Note to self: how to run a query
-    # data = obd.OBD().query(obd.commands.RPM).value.to('mph')
-    # TODO: update commands.GET_CURRENT_DTC for each engine start
+    # data = obd.OBD().query(obd.commands.SPEED).value.to('mph')
 
     def __init__(self):
         logger.info("MaxOBD::init()")
@@ -40,6 +39,9 @@ class MaxOBD(object):
                 if self.obd_name == bluetooth.lookup_name(device):
                     addr = device
                     break
+        ## TODO: check for /dev/rfcomm0 and run these commands if not found:
+        ## sudo hcitool cc <btaddr>
+        ## sudo rfcomm bind 0 <btaddr>
         return addr
 
     def bind_bluetooth(self):
@@ -122,12 +124,18 @@ class MaxOBD(object):
             else:
                 logger.info("OBD is not connected")
                 self.con = obd.Async()
+        except AttributeError as e:
+            ## known to happen when vehicle is shutoff
+            logger.error("self.con.is_connected() threw AttributeError:")
+            logger.error(e)
+            return False
         except Exception as e:
-            logger.info("Failed to run self.con.is_connected():")
-            logger.info(e)
-            if self.bind_bluetooth():
-                logger.info("Opening OBD connection...")
-                self.con = obd.Async()
+            logger.error("self.con.is_connected() threw Exception:")
+            logger.error(e)
+            ## commenting out to see what happens
+##            if self.bind_bluetooth():
+##                logger.info("Opening OBD connection...")
+##                self.con = obd.Async()
             return False #so we can try again on the next loop
                 
         constat = None
@@ -179,11 +187,12 @@ class MaxOBD(object):
             tval = 0
             try:
                 tval = temp.value.to('degF').magnitude
-            except AttributeError:
-                logger.error("Caught NoneType in new_coolant_temp()")
+                logger.info("Coolant temp: %s" % tval)
+            except Exception as e:
+                logger.error("Caught NoneType in new_coolant_temp():")
+                logger.error(e)
                 ## NoneType indicates the engine is now off.
-                self.reset_connection()
-            logger.info("Coolant temp: %s" % tval)
+                #self.reset_connection() #i don't think this belongs here
 
     def new_load(self, load):
         if load is None:
@@ -192,12 +201,12 @@ class MaxOBD(object):
             lval = 0
             try:
                 lval = load.value.magnitude
-            except AttributeError:
-                logger.error("Caught NoneType in new_load()")
+                logger.info("Engine load: %s" % lval)
+            except Exception as e:
+                logger.error("Caught NoneType in new_load():")
+                logger.error(e)
                 ## NoneType indicates the engine is now off.
-                self.reset_connection()
-            logger.info("Engine load: %s" % lval)
-            
+                #self.reset_connection() #i don't think this belongs here            
     def new_rpm(self, rpm):
         if rpm is None:
             logger.info("RPM is none!")
@@ -205,11 +214,12 @@ class MaxOBD(object):
             rval = 0
             try:
                 rval = rpm.value.magnitude
-            except AttributeError:
-                logger.error("Caught NoneType in new_rpm()")
+                logger.info("RPM: %s" % rval)
+            except Exception as e:
+                logger.error("Error in new_rpm():")
+                logger.error(e)
                 ## NoneType indicates the engine is now off.
-                self.reset_connection()
-            logger.info("RPM: %s" % rval)
+                #self.reset_connection() #i don't think this belongs here
     def new_tps(self, tps):
         if tps is None:
             logger.info("TPS is none!")
@@ -217,11 +227,12 @@ class MaxOBD(object):
             tval = 0
             try:
                 tval = tps.value.magnitude
-            except AttributeError:
-                logger.error("Caught NoneType in new_tps()")
+                logger.info("TPS: %s" % tval)
+            except Exception as e:
+                logger.error("Caught NoneType in new_tps():")
+                logger.error(e)
                 ## NoneType indicates the engine is now off.
-                self.reset_connection()
-            logger.info("TPS: %s" % tval)
+                #self.reset_connection() #i don't think this belongs here
     ## end callbacks
 
     def set_watchers(self):

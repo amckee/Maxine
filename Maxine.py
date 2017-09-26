@@ -38,13 +38,17 @@ class Maxine(object):
 
     def start(self):
         logger.info("Maxine::start()")
-        # create objects
+	## for debugging through prototype, run it however
         self.obd = MaxOBD.MaxOBD()
+        self.obd.start()
+
+        # below here is kind of what i had in mind when i wrote it.
+        # it's been awhile, so things change. keeping it all
+        # here for future reference for now.
+
+        # create objects
         #self.security = Security.Security()
         #self.sounds = Sounds.Sounds()
-
-	## for debugging through prototype, run it directly
-        self.obd.start()
 
         # create threads
         #tOBD = threading.Thread(target=self.obd.start)
