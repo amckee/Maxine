@@ -24,4 +24,3 @@ if obd_addr is not None:
     print("connected")
 else:
     print("could not find %s" % obd_name)
-

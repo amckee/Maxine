@@ -45,10 +45,11 @@ class MaxOBD(object):
     def bind_bluetooth(self):
         logger.info("MaxOBD::bind_bluetooth()")
         try:
+            # ensure clean slate before we begin
             self.btsock.close()
         except:
             pass
-        if self.obd_addr == None:
+        if self.obd_addr is None:
             logger.info("Do not have %s address" % self.obd_name)
             btaddr = self.find_obd_device()
             if btaddr is None:
@@ -70,6 +71,7 @@ class MaxOBD(object):
             # 4 = 'Connection reset by peer'
             # 5 = 'Connection reset by peer'
             self.btsock.connect((self.obd_addr, 1))
+            self.con = obd.Async()
         except Exception as e:
             logger.info("Failed to connect to %s device at %s" % (self.obd_name,self.obd_addr))
             logger.info("Error details: %s" % e)
@@ -123,13 +125,11 @@ class MaxOBD(object):
         except Exception as e:
             logger.info("Failed to run self.con.is_connected():")
             logger.info(e)
-            logger.info("Attempting connect to %s..." % self.obd_addr)
             if self.bind_bluetooth():
                 logger.info("Opening OBD connection...")
                 self.con = obd.Async()
             return False #so we can try again on the next loop
                 
-
         constat = None
         try:
             constat = self.con.status()
@@ -139,6 +139,7 @@ class MaxOBD(object):
             logger.info("Attempting re-bind...")
             if self.bind_bluetooth():
                 logger.info("Opening OBD connection...")
+                time.sleep(2)
                 self.con = obd.Async()
             return False #so we can try again on the next loop
 
@@ -173,7 +174,7 @@ class MaxOBD(object):
     ## callbacks
     def new_coolant_temp(self, temp):
         if temp is None:
-            print("temp is none!")
+            logger.info("temp is none!")
         else:
             tval = 0
             try:
@@ -186,7 +187,7 @@ class MaxOBD(object):
 
     def new_load(self, load):
         if load is None:
-            print("load is none!")
+            logger.info("load is none!")
         else:
             lval = 0
             try:
@@ -199,7 +200,7 @@ class MaxOBD(object):
             
     def new_rpm(self, rpm):
         if rpm is None:
-            print("RPM is none!")
+            logger.info("RPM is none!")
         else:
             rval = 0
             try:
@@ -209,6 +210,18 @@ class MaxOBD(object):
                 ## NoneType indicates the engine is now off.
                 self.reset_connection()
             logger.info("RPM: %s" % rval)
+    def new_tps(self, tps):
+        if tps is None:
+            logger.info("TPS is none!")
+        else:
+            tval = 0
+            try:
+                tval = tps.value.magnitude
+            except AttributeError:
+                logger.error("Caught NoneType in new_tps()")
+                ## NoneType indicates the engine is now off.
+                self.reset_connection()
+            logger.info("TPS: %s" % tval)
     ## end callbacks
 
     def set_watchers(self):
@@ -216,8 +229,8 @@ class MaxOBD(object):
         self.con.watch(obd.commands.COOLANT_TEMP, force=True, callback=self.new_coolant_temp)
         self.con.watch(obd.commands.ENGINE_LOAD, force=True, callback=self.new_load)
         self.con.watch(obd.commands.RPM, force=True, callback=self.new_rpm)
+        self.con.watch(obd.commands.THROTTLE_POS, force=True, callback=self.new_tps)
         #self.con.watch(obd.commands.SPEED, force=True)
-        #self.con.watch(obd.commands.THROTTLE_POS, force=True)
         #self.con.watch(obd.commands.TIMING_ADVANCE, force=True)
 
     def reset_connection(self):

@@ -43,13 +43,16 @@ class Maxine(object):
         #self.security = Security.Security()
         #self.sounds = Sounds.Sounds()
 
+	## for debugging through prototype, run it directly
+        self.obd.start()
+
         # create threads
-        tOBD = threading.Thread(target=self.obd.start)
+        #tOBD = threading.Thread(target=self.obd.start)
         #tSecurity = threading.Thread(target=self.security.start)
         #tSounds = threading.Thread(target=self.sounds.start_engine)
 
         # start threads
-        tOBD.start()
+        #tOBD.start()
         #tSecurity.start()
         #tSounds.start()
 
