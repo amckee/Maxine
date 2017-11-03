@@ -3,6 +3,7 @@
 from lib import Security
 from lib import Sounds
 from lib import MaxOBD
+from lib import FanControl
 import threading, time, logging
 from subprocess import call
 
@@ -38,24 +39,27 @@ class Maxine(object):
 
     def start(self):
         logger.info("Maxine::start()")
-	## for debugging through prototype, run it however
-        self.obd = MaxOBD.MaxOBD()
-        self.obd.start()
+	## for debugging through prototype, run it unthreaded
+        #self.obd = MaxOBD.MaxOBD()
+        #self.obd.start()
 
         # below here is kind of what i had in mind when i wrote it.
         # it's been awhile, so things change. keeping it all
         # here for future reference for now.
-
+        
         # create objects
+        self.fan = FanControl.FanControl()
         #self.security = Security.Security()
         #self.sounds = Sounds.Sounds()
 
         # create threads
+        tFan = threading.Thread(target=self.fan.start)
         #tOBD = threading.Thread(target=self.obd.start)
         #tSecurity = threading.Thread(target=self.security.start)
         #tSounds = threading.Thread(target=self.sounds.start_engine)
 
         # start threads
+        tFan.start()
         #tOBD.start()
         #tSecurity.start()
         #tSounds.start()
