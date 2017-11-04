@@ -12,7 +12,7 @@ class FanControl(object):
         self.fan = LED( 4 )
         self.fan.off()
         self.fanon = False # can't trust fan.is_active to report correctly
-        self.maxtemp = 62
+        self.maxtemp = 65
         self.mintemp = 60
 
     def getTemp(self):
