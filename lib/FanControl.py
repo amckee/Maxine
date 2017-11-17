@@ -2,9 +2,8 @@
 from gpiozero import LED, CPUTemperature
 import time, logging
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-#logger.basicConfig( filename='/dev/shm/jeepobd.log' )
+logger = logging.getLogger("maxine.fan")
+logger.setLevel(logging.WARNING)
 
 class FanControl(object):
     def __init__(self):

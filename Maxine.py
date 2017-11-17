@@ -10,23 +10,25 @@ from subprocess import call
 # pip3 install obd
 from obd import commands as obd_values
 
-formatter = logging.Formatter('[%(asctime)s] %(name)-12s %(message)s')
+formatter = logging.Formatter( '[%(asctime)s] %(name)-12s %(message)s' )
 logging.getLogger().addHandler(logging.StreamHandler())
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
+logger = logging.getLogger("maxine")
 logger.setLevel(logging.INFO)
-hdlr = logging.FileHandler('/dev/shm/maxine.log')
+hdlr = logging.FileHandler( '/dev/shm/maxine.log' )
 hdlr.setFormatter(formatter)
-logger.addHandler(hdlr) 
+logger.addHandler(hdlr)
+logger.info("\n")
 
 class Maxine(object):
     # main class for the AI 'brain'.
 
     def __init__(self):
-        logger.info( "Maxine::init()" )
+        logger.info( "init()" )
         #self.running = True # TODO: toggle based on gpio switch
 
     def threadtest(self):
-        print("made it to threadtest")
+        logger.info("threadtest()")
 
     def new_rpm(self, rpm):
         logger.info("New RPM: %s" % rpm.value.magnitude)
@@ -35,10 +37,10 @@ class Maxine(object):
         if type(data) is str:
             return data
         else:
-            return str(data.value)
+            return str( data.value )
 
     def start(self):
-        logger.info("Maxine::start()")
+        logger.info("start()")
 	## for debugging through prototype, run it unthreaded
         #self.obd = MaxOBD.MaxOBD()
         #self.obd.start()
@@ -48,19 +50,20 @@ class Maxine(object):
         # here for future reference for now.
         
         # create objects
+        self.obd = MaxOBD.MaxOBD()
         self.fan = FanControl.FanControl()
         #self.security = Security.Security()
         #self.sounds = Sounds.Sounds()
 
         # create threads
-        tFan = threading.Thread(target=self.fan.start)
-        #tOBD = threading.Thread(target=self.obd.start)
+        tFan = threading.Thread( target=self.fan.start )
+        tOBD = threading.Thread( target=self.obd.start )
         #tSecurity = threading.Thread(target=self.security.start)
         #tSounds = threading.Thread(target=self.sounds.start_engine)
 
         # start threads
         tFan.start()
-        #tOBD.start()
+        tOBD.start()
         #tSecurity.start()
         #tSounds.start()
 

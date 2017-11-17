@@ -1,0 +1,8 @@
+/dev/shm/maxine.log {
+  rotate 10
+  size 512k
+  compress
+  missingok
+  notifempty
+}
+

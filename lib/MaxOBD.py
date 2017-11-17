@@ -4,7 +4,7 @@ from serial.serialutil import SerialException
 from bluetooth import *
 import bluetooth
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("maxine.obd")
 logger.setLevel(logging.INFO)
 #logger.basicConfig( filename='/dev/shm/jeepobd.log' )
 
@@ -20,12 +20,12 @@ class MaxOBD(object):
     # data = obd.OBD().query(obd.commands.SPEED).value.to('mph')
 
     def __init__(self):
-        logger.info("MaxOBD::init()")
+        logger.info("init()")
         self.obd_name = obd_name
         self.obd_addr = obd_addr
 
     def find_obd_device(self):
-        logger.info("MaxOBD::find_obd_device()")
+        logger.info("find_obd_device()")
         ## scan for devices with 'OBDII' as the name
         ## return bluetooth address if found, return None if not found
         addr = None
@@ -45,7 +45,7 @@ class MaxOBD(object):
         return addr
 
     def bind_bluetooth(self):
-        logger.info("MaxOBD::bind_bluetooth()")
+        logger.info("bind_bluetooth()")
         try:
             # ensure clean slate before we begin
             self.btsock.close()
@@ -89,7 +89,7 @@ class MaxOBD(object):
         return dat
 
     def stop(self):
-        logger.info("MaxOBD::stop()")
+        logger.info("stop()")
 
         #this is ugly. is there a better way?
         try:
@@ -109,10 +109,10 @@ class MaxOBD(object):
         except:
             pass
 
-        logger.info("MaxOBD stopped")
+        logger.info("stopped")
         
     def ensure_obd_device(self):
-        logger.info("MaxOBD::ensure_obd_device()")
+        logger.info("ensure_obd_device()")
         # ensure OBD device exists and is connected
         ## return true for success, false for failure
 
@@ -128,14 +128,15 @@ class MaxOBD(object):
             ## known to happen when vehicle is shutoff
             logger.error("self.con.is_connected() threw AttributeError:")
             logger.error(e)
+
+            logger.info("Attempting Bluetooth Connection...")
+            if self.bind_bluetooth():
+                logger.info("Opening OBD connection...")
+                self.con = obd.Async()
             return False
         except Exception as e:
             logger.error("self.con.is_connected() threw Exception:")
             logger.error(e)
-            ## commenting out to see what happens
-##            if self.bind_bluetooth():
-##                logger.info("Opening OBD connection...")
-##                self.con = obd.Async()
             return False #so we can try again on the next loop
                 
         constat = None
@@ -236,7 +237,7 @@ class MaxOBD(object):
     ## end callbacks
 
     def set_watchers(self):
-        logger.info("MaxOBD::set_watchers()")
+        logger.info("set_watchers()")
         self.con.watch(obd.commands.COOLANT_TEMP, force=True, callback=self.new_coolant_temp)
         self.con.watch(obd.commands.ENGINE_LOAD, force=True, callback=self.new_load)
         self.con.watch(obd.commands.RPM, force=True, callback=self.new_rpm)
@@ -245,7 +246,7 @@ class MaxOBD(object):
         #self.con.watch(obd.commands.TIMING_ADVANCE, force=True)
 
     def reset_connection(self):
-        logger.info("MaxOBD::reset_connection()")
+        logger.info("reset_connection()")
         self.stop()
         naptime = 10
         while not self.ensure_obd_device():
@@ -254,10 +255,10 @@ class MaxOBD(object):
                 time.sleep(naptime)
 
     def start(self):
-        logger.info("MaxOBD::start()")
+        logger.info("start()")
         self.reset_connection()
         logger.info("MaxOBD::start()::Finally got connection. Starting OBD...")
         self.set_watchers()
         self.con.start()
                 
-        logger.info("MaxOBD started")
+        logger.info("started")
