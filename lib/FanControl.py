@@ -7,7 +7,6 @@ logger.setLevel(logging.INFO)
 
 class FanControl(object):
     def __init__(self):
-        logger.info("init()")
         self.fan = LED( 4 )
         self.fan.off()
         self.fanon = False # can't trust fan.is_active to report correctly
@@ -32,7 +31,7 @@ class FanControl(object):
                 self.fanon = False
 
     def start(self):
-        logger.info("start()")
+        self.controlFan( 0 ) #ensure fan is off before starting
         logger.info("Initial temperature reading: %s" % self.getTemp())
         while True:
             self.controlFan( self.getTemp() )

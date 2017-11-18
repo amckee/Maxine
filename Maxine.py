@@ -27,14 +27,14 @@ class Maxine(object):
         # create objects
         self.obd = MaxOBD.MaxOBD()
         self.fan = FanControl.FanControl()
-        #self.security = Security.Security()
         #self.sounds = Sounds.Sounds()
+        #self.security = Security.Security()
 
         # create threads
         tFan = threading.Thread( target=self.fan.start )
         tOBD = threading.Thread( target=self.obd.start )
-        #tSecurity = threading.Thread(target=self.security.start)
         #tSounds = threading.Thread(target=self.sounds.start_engine)
+        #tSecurity = threading.Thread(target=self.security.start)
 
         # start threads
         tFan.start()
