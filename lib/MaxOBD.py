@@ -19,7 +19,6 @@ class MaxOBD(object):
     # data = obd.OBD().query(obd.commands.SPEED).value.to('mph')
 
     def __init__(self):
-        logger.info("init()")
         self.obd_name = obd_name
         self.obd_addr = obd_addr
 
@@ -38,7 +37,6 @@ class MaxOBD(object):
         logger.info("=========================================")
 
     def find_obd_device(self):
-        logger.info("find_obd_device()")
         ## scan for devices with 'OBDII' as the name
         ## return bluetooth address if found, return None if not found
         addr = None
@@ -72,8 +70,6 @@ class MaxOBD(object):
 
 
     def bind_bluetooth(self):
-        logger.info("bind_bluetooth()")
-
         # find device and open connection
         if self.obd_addr is None:
             logger.info("Do not have %s address" % self.obd_name)
@@ -103,8 +99,6 @@ class MaxOBD(object):
         return dat
 
     def stop(self):
-        logger.debug("stop()")
-
         #this is ugly. is there a better way?
         try:
             self.con.stop()
@@ -118,11 +112,8 @@ class MaxOBD(object):
             self.con.close()
         except:
             pass
-
-        logger.info("stopped")
     
     def ensure_obd_device(self):
-        logger.info("ensure_obd_device()")
         # ensure OBD device exists and is connected
         ## return true for success, false for failure
         self.print_current_connections()
@@ -200,12 +191,12 @@ class MaxOBD(object):
             try:
                 tval = temp.value.to('degF').magnitude
                 logger.info("Coolant temp: %s" % tval)
+            except TypeError:
+                logger.error("Caught TypeError. Is the engine on?")
             except Exception as e:
-                logger.error("Caught NoneType in new_coolant_temp():")
+                logger.error("Caught other error in new_coolant_temp()")
                 logger.error(e)
-                ## NoneType indicates the engine is now off.
-                #self.reset_connection() #i don't think this belongs here
-
+                time.sleep(1)
     def new_load(self, load):
         if load is None:
             logger.info("load is none!")
@@ -214,11 +205,12 @@ class MaxOBD(object):
             try:
                 lval = load.value.magnitude
                 logger.info("Engine load: %s" % lval)
+            except TypeError:
+                logger.error("Caught TypeError. Is the engine on?")
             except Exception as e:
-                logger.error("Caught NoneType in new_load():")
+                logger.error("Caught other error in new_load()")
                 logger.error(e)
-                ## NoneType indicates the engine is now off.
-                #self.reset_connection() #i don't think this belongs here            
+                time.sleep(1)
     def new_rpm(self, rpm):
         if rpm is None:
             logger.info("RPM is none!")
@@ -227,11 +219,12 @@ class MaxOBD(object):
             try:
                 rval = rpm.value.magnitude
                 logger.info("RPM: %s" % rval)
+            except TypeError:
+                logger.error("Caught TypeError. Is the engine on?")
             except Exception as e:
-                logger.error("Error in new_rpm():")
+                logger.error("Caught other error in new_rpm()")
                 logger.error(e)
-                ## NoneType indicates the engine is now off.
-                #self.reset_connection() #i don't think this belongs here
+                time.sleep(1)
     def new_tps(self, tps):
         if tps is None:
             logger.info("TPS is none!")
@@ -240,24 +233,24 @@ class MaxOBD(object):
             try:
                 tval = tps.value.magnitude
                 logger.info("TPS: %s" % tval)
+            except TypeError:
+                logger.error("Caught TypeError. Is the engine on?")
             except Exception as e:
-                logger.error("Caught NoneType in new_tps():")
+                logger.error("Caught other error in new_tps()")
                 logger.error(e)
-                ## NoneType indicates the engine is now off.
-                #self.reset_connection() #i don't think this belongs here
+                time.sleep(1)
     ## end callbacks
 
     def set_watchers(self):
         logger.info("set_watchers()")
-        self.con.watch(obd.commands.COOLANT_TEMP, force=True, callback=self.new_coolant_temp)
-        self.con.watch(obd.commands.ENGINE_LOAD, force=True, callback=self.new_load)
-        self.con.watch(obd.commands.RPM, force=True, callback=self.new_rpm)
-        self.con.watch(obd.commands.THROTTLE_POS, force=True, callback=self.new_tps)
+        self.con.watch(obd.commands.COOLANT_TEMP, force=True) #, callback=self.new_coolant_temp)
+        #self.con.watch(obd.commands.ENGINE_LOAD, force=True, callback=self.new_load)
+        #self.con.watch(obd.commands.RPM, force=True, callback=self.new_rpm)
+        self.con.watch(obd.commands.THROTTLE_POS, force=True) #, callback=self.new_tps)
         #self.con.watch(obd.commands.SPEED, force=True)
         #self.con.watch(obd.commands.TIMING_ADVANCE, force=True)
 
     def reset_connection(self):
-        logger.info("reset_connection()")
         #self.stop()
         naptime = 10
         while not self.ensure_obd_device():
@@ -271,7 +264,7 @@ class MaxOBD(object):
         logger.info("start()")
         #self.print_current_connections()
         self.reset_connection()
-        logger.info("Finally got connection. Starting OBD...")
+        logger.info("Got connection. Starting OBD...")
         self.set_watchers()
         self.con.start()
                 
