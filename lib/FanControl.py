@@ -3,11 +3,11 @@ from gpiozero import LED, CPUTemperature
 import time, logging
 
 logger = logging.getLogger("maxine.fan")
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.INFO)
 
 class FanControl(object):
     def __init__(self):
-        logger.info("FanControl::init()")
+        logger.info("init()")
         self.fan = LED( 4 )
         self.fan.off()
         self.fanon = False # can't trust fan.is_active to report correctly
@@ -32,7 +32,8 @@ class FanControl(object):
                 self.fanon = False
 
     def start(self):
-        logger.info("FanControl::start()")
+        logger.info("start()")
+        logger.info("Initial temperature reading: %s" % self.getTemp())
         while True:
             self.controlFan( self.getTemp() )
             time.sleep( 1 )

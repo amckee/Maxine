@@ -72,4 +72,4 @@ class Maxine(object):
 
 m = Maxine()
 m.start()
-logger.info("Maxine completed.")
+#logger.info("Maxine completed.")
