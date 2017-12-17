@@ -1,14 +1,25 @@
-from obd import OBDStatus
-import obd, logging, os.path, subprocess, time
+import obd, logging, os.path, subprocess, time, bluetooth, threading
 from serial.serialutil import SerialException
+from obd import OBDStatus
 from bluetooth import *
-import bluetooth
 
 logger = logging.getLogger("maxine.obd")
 logger.setLevel(logging.INFO)
 
 obd_name = "OBDII"
 obd_addr = None
+
+## logging thread initial template
+##class MaxOBDLog(Thread):
+##    def __init__(self):
+##        Thread.__init__(self)
+##        self.daemon = True
+##        self.start()
+##    def run(self):
+##        while True:
+##            ## TODO: append to file ( /dev/shm/obdstat )
+##            print("%s,%s,%s" % ())
+
 
 class MaxOBD(object):
     # Note to self: how to run a query
@@ -162,6 +173,9 @@ class MaxOBD(object):
         self.start()
 
     def start(self):
+        ## start logging thread
+        ## see logging thread template above
+        
         if self.find_obd_device() is not None:
             self.connect_bluetooth()
             self.connect_obd()
