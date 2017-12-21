@@ -9,19 +9,23 @@ from subprocess import call
 
 # pip3 install obd
 from obd import commands as obd_values
-
-formatter = logging.Formatter( '[%(asctime)s] %(name)-12s %(message)s' )
-logging.getLogger().addHandler(logging.StreamHandler())
-#logger = logging.getLogger(__name__)
-logger = logging.getLogger("maxine")
-logger.setLevel(logging.INFO)
-hdlr = logging.FileHandler( '/dev/shm/maxine.log' )
-hdlr.setFormatter(formatter)
-logger.addHandler(hdlr)
-logger.info("\n")
+from logging_tree import printout
 
 class Maxine(object):
     # main class for the AI 'brain'.
+
+    def __init__( self ):
+        logger = logging.getLogger( "maxine" )
+        formatter = logging.Formatter( '[%(asctime)s] %(name)-12s %(message)s' )
+        fhandler = logging.FileHandler( '/dev/shm/maxine.log', mode='w' )
+        fhandler.setFormatter( formatter )
+        shandler = logging.StreamHandler()
+        shandler.setFormatter( formatter )
+
+        logger.setLevel(logging.INFO)
+        logger.addHandler( fhandler )
+        logger.addHandler( shandler )
+        logger.info("\n") # start instance with new line
 
     def start(self):
         # create objects
@@ -42,9 +46,14 @@ class Maxine(object):
         #tSecurity.start()
         #tSounds.start()
 
+        # join threads to single pool
+        #tFan.join()
+        #tOBD.join()
         #tSecurity.join()
         #tSounds.join()
+        #printout() ## show logger tree
+
 
 m = Maxine()
 m.start()
-#logger.info("Maxine completed.")
+#logger.info("Maxine exited")

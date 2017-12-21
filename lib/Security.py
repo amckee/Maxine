@@ -6,8 +6,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 class Security(object):
+    ## Track door open/close activity
+    ## Manage cameras on/off (storage?)
+    ## Skimmer Scanner thread / alerts:
+    ##  - https://github.com/sparkfunX/Skimmer_Scanner
     btnPassenger = Button(13) #passenger door
-    btnDriver = Button(14) #driver door
+    btnDriver = Button(14)    #driver door
 
     def door_open(self, btn):
         if btn == self.btnPassenger:

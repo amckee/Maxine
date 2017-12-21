@@ -3,23 +3,36 @@ from serial.serialutil import SerialException
 from obd import OBDStatus
 from bluetooth import *
 
-logger = logging.getLogger("maxine.obd")
-logger.setLevel(logging.INFO)
+## main logging mechanism
+logger = logging.getLogger( "maxine.obd" )
 
 obd_name = "OBDII"
 obd_addr = None
 
-## logging thread initial template
-##class MaxOBDLog(Thread):
-##    def __init__(self):
-##        Thread.__init__(self)
-##        self.daemon = True
-##        self.start()
-##    def run(self):
-##        while True:
-##            ## TODO: append to file ( /dev/shm/obdstat )
-##            print("%s,%s,%s" % ())
-
+##class MaxOBDLog( threading.Thread ):
+##    ## output obdstat data to file
+##    def create_logger( self, lname ):
+##        obdstatfile = "/dev/shm/obdstat.dat"
+##        self.obdlog = logging.getLogger( lname )
+##        formatter = logging.Formatter( '%(asctime)s,%(message)s' )
+##        fhandler = logging.FileHandler( obdstatfile, mode='w' )
+##        fhandler.setFormatter( formatter )
+##        shandler = logging.StreamHandler()
+##        shandler.setFormatter( formatter )
+##        
+##        self.obdlog.setLevel( logging.INFO )
+##        self.obdlog.addHandler( fhandler )
+##        self.obdlog.addHandler( shandler )
+##        #self.obdlog.propagate = False
+##        return True
+##    
+##    def run( self ):
+##        if self.create_logger( 'maxine.obd.stat' ):
+##            while True:
+##                self.obdlog.info( 'obd stat logger test' )
+##                time.sleep(1)
+##        else:
+##            logger.error("Could not create OBD stat log file!")
 
 class MaxOBD(object):
     # Note to self: how to run a query
@@ -30,26 +43,12 @@ class MaxOBD(object):
         self.obd_addr = obd_addr
         #self.obd_addr = "00:1D:A5:00:01:EB" #uncomment for super debug override
 
-    def show_status(self):
-        logger.info("===================")
-        logger.info("|  Current Status |")
-        logger.info("-------------------")
-        try:
-            logger.info( "| OBD: %s" % self.con.status() )
-        except:
-            logger.info( "| OBD: failed" )
-        try:
-            logger.info( "| /dev/rfcomm0: %s" % os.path.exists("/dev/rfcomm0") )
-        except:
-            logger.info( "| /dev/rfcomm0: failed" )
-        logger.info("=========================================")
-
     def find_obd_device(self):
         ## scan for devices with 'OBDII' as the name
         ## return bluetooth address if found, return None if not found
         logger.info("Scanning for all nearby bluetooth devices...")
         nearby_devices = bluetooth.discover_devices()
-        logger.info("Found %s devices nearby" % len(nearby_devices))
+        logger.info("Found %s bluetooth devices nearby" % len(nearby_devices))
         if len(nearby_devices) > 0:
             for device in nearby_devices:
                 if self.obd_name == bluetooth.lookup_name(device):
@@ -59,13 +58,13 @@ class MaxOBD(object):
         return None
 
     def drop_bluetooth(self):
-        logger.info("Dropping all bluetooth everythings...")
+        logger.warning("Dropping all bluetooth everythings...")
         subprocess.call(['sudo', 'rfcomm', 'unbind', '0'])
         subprocess.call(['sudo', 'hcitool', 'dc', self.obd_addr])
         self.obd_addr = None
         
     def stop(self):
-        #this is ugly. is there a better way?
+        #this feels ugly. is there a better way?
         try:
             self.con.stop()
         except:
@@ -79,71 +78,16 @@ class MaxOBD(object):
         except:
             pass
         self.drop_bluetooth()
-        logger.info("Completely stopped.")
+        logger.warning("Bluetooth and OBD connections completely stopped.")
     
-    ## callbacks
-    def new_coolant_temp(self, temp):
-        if temp is None:
-            logger.info("temp is none!")
-        else:
-            tval = 0
-            try:
-                tval = temp.value.to('degF').magnitude
-                logger.info("Coolant temp: %s" % tval)
-            except TypeError:
-                logger.error("Caught TypeError. Is the engine on?")
-            except Exception as e:
-                logger.error("Caught other error in new_coolant_temp()")
-                self.restart()
-    def new_load(self, load):
-        if load is None:
-            logger.info("load is none!")
-        else:
-            lval = 0
-            try:
-                lval = load.value.magnitude
-                logger.info("Engine load: %s" % lval)
-            except TypeError:
-                logger.error("Caught TypeError. Is the engine on?")
-            except Exception as e:
-                logger.error("Caught other error in new_load()")
-                self.restart()
-    def new_rpm(self, rpm):
-        if rpm is None:
-            logger.info("RPM is none!")
-        else:
-            rval = 0
-            try:
-                rval = rpm.value.magnitude
-                logger.info("RPM: %s" % rval)
-            except TypeError:
-                logger.error("Caught TypeError. Is the engine on?")
-            except Exception as e:
-                logger.error("Caught other error in new_rpm()")
-                self.restart()
-    def new_tps(self, tps):
-        if tps is None:
-            logger.info("TPS is none!")
-        else:
-            tval = 0
-            try:
-                tval = tps.value.magnitude
-                logger.info("TPS: %s" % tval)
-            except TypeError:
-                logger.error("Caught TypeError. Is the engine on?")
-            except Exception as e:
-                logger.error("Caught other error in new_tps()")
-                self.restart()
-    ## end callbacks
-
     def set_watchers(self):
         logger.info("Setting watchers...")
-        self.con.watch(obd.commands.COOLANT_TEMP, force=True, callback=self.new_coolant_temp)
-        #self.con.watch(obd.commands.ENGINE_LOAD, force=True, callback=self.new_load)
-        #self.con.watch(obd.commands.RPM, force=True, callback=self.new_rpm)
-        self.con.watch(obd.commands.THROTTLE_POS, force=True, callback=self.new_tps)
-        #self.con.watch(obd.commands.SPEED, force=True)
-        #self.con.watch(obd.commands.TIMING_ADVANCE, force=True)
+        self.con.watch(obd.commands.COOLANT_TEMP, force=True) #, callback=self.new_coolant_temp)
+        self.con.watch(obd.commands.ENGINE_LOAD, force=True) #, callback=self.new_load)
+        self.con.watch(obd.commands.RPM, force=True) #, callback=self.new_rpm)
+        self.con.watch(obd.commands.THROTTLE_POS, force=True) #, callback=self.new_tps)
+        self.con.watch(obd.commands.SPEED, force=True)
+        self.con.watch(obd.commands.TIMING_ADVANCE, force=True)
 
     def connect_bluetooth(self):
         if self.obd_addr is None:
@@ -167,17 +111,52 @@ class MaxOBD(object):
         return False
 
     def restart(self):
-        logger.info("Restarting...")
+        logger.warning("Restarting...")
         self.stop()
         time.sleep(1) # driver is buggy. this helps.
         self.start()
 
+    def _clean_input( self, value ):
+        if value is None:
+            return 0
+        return value
+    
+    def obd_log_loop(self):
+        obdlog = logging.getLogger( 'obdstat' )
+        formatter = logging.Formatter( '%(asctime)s,%(message)s' )
+        fhandler = logging.FileHandler( "/dev/shm/obdstat.dat", mode='w' )
+        fhandler.setFormatter( formatter )
+        shandler = logging.StreamHandler()
+        shandler.setFormatter( formatter )
+        
+        obdlog.setLevel( logging.INFO )
+        obdlog.addHandler( fhandler )
+        obdlog.addHandler( shandler )
+        #self.obdlog.propagate = False
+        logger.info( "obd log loop sarted" )
+
+        while True:
+            try:
+                rpm = self._clean_input( self.con.query( obd.commands.RPM ) )
+                tps = self._clean_input( self.con.query( obd.commands.THROTTLE_POS ) )
+                temp = self._clean_input( self.con.query( obd.commands.COOLANT_TEMP ) )
+                mph = self._clean_input( self.con.query( obd.commands.MPH ) )
+                
+                obdlog.info("%s,%s,%s" % (rpm,tps,temp))
+            except Exception as e:
+                #logger.error( "Failed to pull OBD data:\n%s" % str(e) )
+                pass
+            finally:
+                time.sleep( 1 )
+
     def start(self):
         ## start logging thread
-        ## see logging thread template above
+        logthread = threading.Thread( target=self.obd_log_loop )
         
         if self.find_obd_device() is not None:
             self.connect_bluetooth()
-            self.connect_obd()
+            if self.connect_obd():
+                logthread.start()
+                logger.info("OBD Started")
         else:
-            logger.info("Did not find OBD device.")
+            logger.error("Did not find OBD device.")
