@@ -9,31 +9,6 @@ logger = logging.getLogger( "maxine.obd" )
 obd_name = "OBDII"
 obd_addr = None
 
-##class MaxOBDLog( threading.Thread ):
-##    ## output obdstat data to file
-##    def create_logger( self, lname ):
-##        obdstatfile = "/dev/shm/obdstat.dat"
-##        self.obdlog = logging.getLogger( lname )
-##        formatter = logging.Formatter( '%(asctime)s,%(message)s' )
-##        fhandler = logging.FileHandler( obdstatfile, mode='w' )
-##        fhandler.setFormatter( formatter )
-##        shandler = logging.StreamHandler()
-##        shandler.setFormatter( formatter )
-##        
-##        self.obdlog.setLevel( logging.INFO )
-##        self.obdlog.addHandler( fhandler )
-##        self.obdlog.addHandler( shandler )
-##        #self.obdlog.propagate = False
-##        return True
-##    
-##    def run( self ):
-##        if self.create_logger( 'maxine.obd.stat' ):
-##            while True:
-##                self.obdlog.info( 'obd stat logger test' )
-##                time.sleep(1)
-##        else:
-##            logger.error("Could not create OBD stat log file!")
-
 class MaxOBD(object):
     # Note to self: how to run a query
     # data = obd.OBD().query(obd.commands.SPEED).value.to('mph')
@@ -45,7 +20,7 @@ class MaxOBD(object):
 
     def find_obd_device(self):
         ## scan for devices with 'OBDII' as the name
-        ## return bluetooth address if found, return None if not found
+        ## return bluetooth address if found, otherwise return None
         logger.info("Scanning for all nearby bluetooth devices...")
         nearby_devices = bluetooth.discover_devices()
         logger.info("Found %s bluetooth devices nearby" % len(nearby_devices))
@@ -64,7 +39,7 @@ class MaxOBD(object):
         self.obd_addr = None
         
     def stop(self):
-        #this feels ugly. is there a better way?
+        #this feels ugly. there has to be a better way
         try:
             self.con.stop()
         except:
@@ -152,11 +127,12 @@ class MaxOBD(object):
     def start(self):
         ## start logging thread
         logthread = threading.Thread( target=self.obd_log_loop )
-        
-        if self.find_obd_device() is not None:
-            self.connect_bluetooth()
-            if self.connect_obd():
-                logthread.start()
-                logger.info("OBD Started")
-        else:
-            logger.error("Did not find OBD device.")
+
+        while True:
+            if self.find_obd_device() is not None:
+                self.connect_bluetooth()
+                if self.connect_obd():
+                    logthread.start()
+                    logger.info("OBD Started")
+            else:
+                logger.error("Did not find OBD device.")
