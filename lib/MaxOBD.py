@@ -116,7 +116,7 @@ class MaxOBD(object):
             try:
                 mph = self._clean_input( self.con.query( obd.commands.SPEED ) )
                 rpm = self._clean_input( self.con.query( obd.commands.RPM ) )
-                tps = self._clean_input( self.con.query( obd.commands.THROTTLE_POS ) )
+                tps = format( self._clean_input( self.con.query( obd.commands.THROTTLE_POS ) ), '.2f' )
                 temp = self._clean_input( self.con.query( obd.commands.COOLANT_TEMP ) )
                 
                 obdlog.info("%s,%s,%s,%s" % (mph,rpm,tps,temp))

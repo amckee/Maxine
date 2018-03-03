@@ -1,7 +1,6 @@
-/dev/shm/maxine.log {
-  rotate 10
-  size 512k
-  compress
+/dev/shm/maxine.log, /dev/shm/obdstat.dat {
+  rotate 0
+  size 56k
   missingok
   notifempty
 }
