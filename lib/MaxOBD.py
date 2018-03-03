@@ -75,6 +75,7 @@ class MaxOBD(object):
         subprocess.call(['sudo', 'hcitool', 'cc', self.obd_addr])
         subprocess.call(['sudo', 'rfcomm', 'bind', '0', self.obd_addr])
         return True
+    
     def connect_obd(self):
         self.con = obd.Async()
 
@@ -92,9 +93,10 @@ class MaxOBD(object):
         self.start()
 
     def _clean_input( self, value ):
-        if value is None:
-            return 0
-        return value
+        #logger.info( "value: %s" % value )
+        if not value.is_null():
+            return value.value.magnitude
+        return 0
     
     def obd_log_loop(self):
         obdlog = logging.getLogger( 'obdstat' )
@@ -108,21 +110,24 @@ class MaxOBD(object):
         obdlog.addHandler( fhandler )
         obdlog.addHandler( shandler )
         #self.obdlog.propagate = False
-        logger.info( "obd log loop sarted" )
+        logger.info( "obd log loop started" )
 
         while True:
             try:
+                mph = self._clean_input( self.con.query( obd.commands.SPEED ) )
                 rpm = self._clean_input( self.con.query( obd.commands.RPM ) )
                 tps = self._clean_input( self.con.query( obd.commands.THROTTLE_POS ) )
                 temp = self._clean_input( self.con.query( obd.commands.COOLANT_TEMP ) )
-                mph = self._clean_input( self.con.query( obd.commands.MPH ) )
                 
-                obdlog.info("%s,%s,%s" % (rpm,tps,temp))
+                obdlog.info("%s,%s,%s,%s" % (mph,rpm,tps,temp))
             except Exception as e:
-                #logger.error( "Failed to pull OBD data:\n%s" % str(e) )
-                pass
+                logger.error( "Failed to pull OBD data:\n%s" % str(e) )
+                logger.error( "Exiting..." )
+                break
+                #pass
             finally:
                 time.sleep( 1 )
+        logger.info( "obd log loop stopped" )
 
     def start(self):
         ## start logging thread
@@ -134,5 +139,3 @@ class MaxOBD(object):
                 if self.connect_obd():
                     logthread.start()
                     logger.info("OBD Started")
-            else:
-                logger.error("Did not find OBD device.")

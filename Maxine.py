@@ -25,7 +25,7 @@ class Maxine(object):
         logger.setLevel(logging.INFO)
         logger.addHandler( fhandler )
         logger.addHandler( shandler )
-        logger.info("\n") # start instance with new line
+        logger.info("Maxine Started")
 
     def start(self):
         # create objects
