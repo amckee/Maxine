@@ -14,6 +14,8 @@ Using https://github.com/brendan-w/python-OBD.git for the OBD backend, 'cause it
 Currently there isn't much. This is really just to tie in my dev area on the Pi itself to the corresponding git repo.
 Working:
  - Fan controlled based on CPU temperature to reduce power usage
+ - Auto scan, find and connect to OBD bluetooth device
+ - OBD data pulling, with output to file for external tool usage
 
 TODO:
  - General engine fault warnings
