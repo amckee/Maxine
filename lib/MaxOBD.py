@@ -139,3 +139,6 @@ class MaxOBD(object):
                 if self.connect_obd():
                     logthread.start()
                     logger.info("OBD Started")
+                    break
+
+        logger.info("Start finished")
