@@ -118,8 +118,10 @@ class MaxOBD(object):
                 rpm = self._clean_input( self.con.query( obd.commands.RPM ) )
                 tps = format( self._clean_input( self.con.query( obd.commands.THROTTLE_POS ) ), '.2f' )
                 temp = self._clean_input( self.con.query( obd.commands.COOLANT_TEMP ) )
+                volt = self._clean_input( self.con.query( obd.commands.ELM_VOLTAGE ) )
+                fuel = self._clean_input( self.con.query( obd.commands.FUEL_LEVEL ) )
                 
-                obdlog.info("%s,%s,%s,%s" % (mph,rpm,tps,temp))
+                obdlog.info("%s,%s,%s,%s,%s,%s" % (mph,rpm,tps,temp,volt,fuel))
             except Exception as e:
                 logger.error( "Failed to pull OBD data:\n%s" % str(e) )
                 logger.error( "Exiting..." )
