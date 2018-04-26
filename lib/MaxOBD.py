@@ -114,12 +114,15 @@ class MaxOBD(object):
 
         while True:
             try:
-                mph = self._clean_input( self.con.query( obd.commands.SPEED ) )
+                mph = self._clean_input( self.con.query( obd.commands.SPEED ).value.to('mph') )
                 rpm = self._clean_input( self.con.query( obd.commands.RPM ) )
                 tps = format( self._clean_input( self.con.query( obd.commands.THROTTLE_POS ) ), '.2f' )
-                temp = self._clean_input( self.con.query( obd.commands.COOLANT_TEMP ) )
+                temp = self._clean_input( self.con.query( obd.commands.COOLANT_TEMP ).value.to('f') )
                 volt = self._clean_input( self.con.query( obd.commands.ELM_VOLTAGE ) )
                 fuel = self._clean_input( self.con.query( obd.commands.FUEL_LEVEL ) )
+
+                # change units to imperial
+                mph =
                 
                 obdlog.info("%s,%s,%s,%s,%s,%s" % (mph,rpm,tps,temp,volt,fuel))
             except Exception as e:
