@@ -9,7 +9,7 @@ from subprocess import call
 
 # pip3 install obd
 from obd import commands as obd_values
-from logging_tree import printout
+#from logging_tree import printout
 
 class Maxine(object):
     # main class for the AI 'brain'.

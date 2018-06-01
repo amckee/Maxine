@@ -2,6 +2,7 @@ Quickstart:
 - apt-get install portaudio19-dev
 - pip3 install pyaudio
 - pip3 install obd
+- pip3 install pybluez
 - python3 /path/to/Maxine.py
 - sudo ln -s /path/to/Maxine/etc/logrotate /etc/logrotate.d/maxine
 
