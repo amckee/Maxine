@@ -17,24 +17,28 @@ class MaxOBD(object):
         self.obd_name = obd_name
         self.obd_addr = obd_addr
         #self.obd_addr = "00:1D:A5:00:01:EB" #uncomment for super debug override
+        logger.info("OBD Started")
 
     def find_obd_device(self):
         ## scan for devices with 'OBDII' as the name
         ## return bluetooth address if found, otherwise return None
-        logger.info("Scanning for all nearby bluetooth devices...")
         nearby_devices = bluetooth.discover_devices()
         logger.info("Found %s bluetooth devices nearby" % len(nearby_devices))
-        if len(nearby_devices) > 0:
-            for device in nearby_devices:
-                if self.obd_name == bluetooth.lookup_name(device):
-                    logger.info("Found %s at %s" % (self.obd_name, device))
-                    self.obd_addr = device
-                    return device
+        
+        ## TODO: is this if condition needed?
+        #if len(nearby_devices) > 0:
+        for device in nearby_devices:
+            if self.obd_name == bluetooth.lookup_name(device):
+                logger.info("Found %s at %s" % (self.obd_name, device))
+                self.obd_addr = device
+                return device
         return None
 
     def drop_bluetooth(self):
         logger.warning("Dropping all bluetooth everythings...")
+        logger.info("# sudo rfcomm unbind 0")
         subprocess.call(['sudo', 'rfcomm', 'unbind', '0'])
+        logger.info("# sudo hcitool dc %s" % self.obd_addr)
         subprocess.call(['sudo', 'hcitool', 'dc', self.obd_addr])
         self.obd_addr = None
         
@@ -78,7 +82,6 @@ class MaxOBD(object):
     
     def connect_obd(self):
         self.con = obd.Async()
-
         if self.con.is_connected():
             logger.info("OBD Connection established.")
             self.set_watchers()
@@ -109,8 +112,9 @@ class MaxOBD(object):
         obdlog.setLevel( logging.INFO )
         obdlog.addHandler( fhandler )
         obdlog.addHandler( shandler )
-        #self.obdlog.propagate = False
         logger.info( "obd log loop started" )
+
+        
 
         while True:
             try:
@@ -122,11 +126,16 @@ class MaxOBD(object):
                 fuel = self._clean_input( self.con.query( obd.commands.FUEL_LEVEL ) )
                 
                 obdlog.info("%s,%s,%s,%s,%s,%s" % (mph,rpm,tps,temp,volt,fuel))
+            except ValueError:
+                logger.error( "OBD seems on but engine seems off." )
+                time.sleep(30)
             except Exception as e:
-                logger.error( "Failed to pull OBD data:\n%s" % str(e) )
-                logger.error( "Exiting..." )
-                break
-                #pass
+                logger.error( "Failed to pull OBD data. Unhandled error is:\n%s" % str(e) )
+                logger.info( "Sleeping 30s" )
+                time.sleep(30)
+                #logger.error( "Exiting..." )
+                #break
+                pass
             finally:
                 time.sleep( 1 )
         logger.info( "obd log loop stopped" )
@@ -134,13 +143,11 @@ class MaxOBD(object):
     def start(self):
         ## start logging thread
         logthread = threading.Thread( target=self.obd_log_loop )
+        logthread.start()
 
         while True:
             if self.find_obd_device() is not None:
                 self.connect_bluetooth()
-                if self.connect_obd():
-                    logthread.start()
-                    logger.info("OBD Started")
-                    break
+                self.connect_obd()
 
         logger.info("Start finished")

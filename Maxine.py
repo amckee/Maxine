@@ -25,7 +25,6 @@ class Maxine(object):
         logger.setLevel(logging.INFO)
         logger.addHandler( fhandler )
         logger.addHandler( shandler )
-        logger.info("Maxine Started")
 
     def start(self):
         # create objects
@@ -56,4 +55,4 @@ class Maxine(object):
 
 m = Maxine()
 m.start()
-#logger.info("Maxine exited")
+print("Maxine exited")

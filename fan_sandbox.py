@@ -36,8 +36,10 @@ def controlFan(temp):
 
     if int(temp) >= int(maxtemp):
         fanOn()
-    elif temp <= mintemp:
+    elif int(temp) <= int(mintemp):
         fanOff()
+    else:
+        print("Skipping this poll.")
 
 def main():
     while True:
