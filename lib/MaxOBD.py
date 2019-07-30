@@ -114,8 +114,6 @@ class MaxOBD(object):
         obdlog.addHandler( shandler )
         logger.info( "obd log loop started" )
 
-        
-
         while True:
             try:
                 mph = self._clean_input( self.con.query( obd.commands.SPEED ).value.to('mph') )

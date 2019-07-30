@@ -8,10 +8,10 @@ fan = LED(4)
 fan.off()
 
 #temp at which we turn the fan on
-maxtemp = 61
+maxtemp = 56
 
 #temp at which we turn the fan off
-mintemp = 60
+mintemp = 50
 
 def getTemp():
     cmd = "vcgencmd measure_temp | grep -Eo '[0-9]{1,3}\.[0-9]'"

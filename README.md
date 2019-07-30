@@ -1,5 +1,5 @@
 Quickstart:
-- apt-get install portaudio19-dev
+- apt install portaudio19-dev libbluetooth-dev
 - pip3 install pyaudio
 - pip3 install obd
 - pip3 install pybluez

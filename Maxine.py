@@ -55,4 +55,3 @@ class Maxine(object):
 
 m = Maxine()
 m.start()
-print("Maxine exited")
