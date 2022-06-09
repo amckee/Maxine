@@ -6,7 +6,7 @@ from bluetooth import *
 ## main logging mechanism
 logger = logging.getLogger( "maxine.obd" )
 
-obd_name = "OBDII"
+obd_name = "FIXD"
 obd_addr = None
 
 class MaxOBD(object):
