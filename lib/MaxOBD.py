@@ -67,11 +67,8 @@ class MaxOBD( object ):
                     logger.error("ValueError Details:\n%s" % str(e) )
                 time.sleep( 30 )
             except AttributeError as e:
-                if not con.is_connected():
-                    logger.info( "No OBD connection. Sleeping 10s..." )
-                    time.sleep( 10 )
-                else:
-                    logger.error( "AttributeError Details:\n%s" % str(e) )
+                logger.info( "No OBD connection. Sleeping 10s..." )
+                time.sleep( 10 )
             except Exception as e:
                 logger.error( "General failure to pull OBD data. Unhandled error is:\n%s" % str(e) )
                 logger.info( "Sleeping 30s" )
@@ -86,17 +83,21 @@ class MaxOBD( object ):
 
         while True:
             #self.con = obd.Async()
-            self.con = obd.OBD()
+            try:
+                self.con = obd.OBD()
 
-            if self.con.is_connected():
-                logger.info( "OBD Connection established." )
-                logger.info( "Starting OBD thread logger")
-                logthread.start()
+                if self.con.is_connected():
+                    logger.info( "OBD Connection established." )
+                    logger.info( "Starting OBD thread logger")
+                    logthread.start()
 
-                #self.set_watchers()
-                #self.con.start()
-            else:
-                logger.info( "Failed to find OBD device. Looping..." )
-            time.sleep( 5 )
+                    #self.set_watchers()
+                    #self.con.start()
+                else:
+                    logger.info( "Failed to find OBD device. Looping..." )
+            except:
+                logger.info( "Something failed. Delaying next loop attempt 5s..." )
+            finally:
+                time.sleep( 5 )
 
         logger.info( "MaxOBD::start() finished" )

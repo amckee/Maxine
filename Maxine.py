@@ -3,7 +3,7 @@
 #from lib import Security
 from lib import Sounds
 from lib import MaxOBD
-#from lib import FanControl
+from lib import FanControl
 import threading, time, logging
 from subprocess import call
 
@@ -29,27 +29,27 @@ class Maxine(object):
     def start(self):
         # create objects
         self.obd = MaxOBD.MaxOBD()
-        #self.fan = FanControl.FanControl()
+        self.fan = FanControl.FanControl()
         self.sounds = Sounds.Sounds()
         #self.security = Security.Security()
 
         # create threads
-        #tFan = threading.Thread( target=self.fan.start )
+        tFan = threading.Thread( target=self.fan.start )
         tOBD = threading.Thread( target=self.obd.start )
-        #tSounds = threading.Thread(target=self.sounds.start_engine)
+        tSounds = threading.Thread(target=self.sounds.start_engine)
         #tSecurity = threading.Thread(target=self.security.start)
 
         # start threads
-        #tFan.start()
+        tFan.start()
         tOBD.start()
         #tSecurity.start()
-        #tSounds.start()
+        tSounds.start()
 
         # join threads to single pool
-        #tFan.join()
-        #tOBD.join()
+        tFan.join()
+        tOBD.join()
         #tSecurity.join()
-        #tSounds.join()
+        tSounds.join()
         #printout() ## show logger tree
 
 m = Maxine()
