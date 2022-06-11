@@ -1,24 +1,31 @@
-from gpiozero import Button
-from signal import pause
-import datetime
-import time
+#!/usr/bin/python3
 
-def btnPassengerClosed():
-    dt = datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S')
-    #t = time.time().strftime('%Y.%m.%d %H:%M:%S')
-    print("[%s] Passenger door closed" % dt)
+from bluetooth import *
+import bluetooth
 
-def btnPassengerOpened():
-    dt = datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S')
-    print("[%s] Passenger door opened" % dt)
+obd_name = "FIXD"
+#obd_mac = "88:1B:99:1D:1F:5E"
+obd_addr = None
 
-btnPassengerDoor = Button(13)
+print( "Scanning..." )
+neardevs = bluetooth.discover_devices()
 
-dt = datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S')
-print(dt)
+print( "Found %d devices" % len(neardevs) )
 
-btnPassengerDoor.when_pressed = btnPassengerClosed
-btnPassengerDoor.when_released = btnPassengerOpened
-print("awaiting door events...")
+for dev in neardevs:
+    if obd_name == bluetooth.lookup_name( dev ):
+        obd_addr = dev
+        break
 
-pause()
+if obd_addr is not None:
+    print( "Found %s at %s" % (obd_name, obd_addr) )
+    print( "Checking connection status of %s" % obd_name )
+    sock = BluetoothSocket( RFCOMM )
+    sock.connect( (obd_addr,1) )
+    # to disconnect, sock.close()
+    print( "Connected" )
+
+    #sock.close()
+else:
+    print( "Could not find %s" % obd_name )
+

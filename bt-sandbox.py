@@ -1,7 +1,7 @@
 from bluetooth import *
 import bluetooth
 
-obd_name = "OBDII"
+obd_name = "FIXD"
 #obd_mac = "00:1D:A5:00:01:EB"
 obd_addr = None
 

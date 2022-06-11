@@ -20,14 +20,13 @@ class MaxOBD( object ):
         logger.info( "OBD Started" )
 
     def find_obd_device( self ):
-        ## scan for devices with 'OBDII' as the name
         ## return bluetooth address if found, otherwise return None
+        logger.info( "Looking for bluetooth devices..." )
         nearby_devices = bluetooth.discover_devices()
         logger.info( "Found %s bluetooth devices nearby" % len(nearby_devices) )
         
         for device in nearby_devices:
-            if self.obd_name == bluetooth.lookup_name(device):
-                logger.info( "Found %s at %s" % (self.obd_name, device) )
+            if self.obd_name == bluetooth.lookup_name( device ):
                 self.obd_addr = device
                 return device
         return None
@@ -39,7 +38,7 @@ class MaxOBD( object ):
         logger.info( "# sudo hcitool dc %s" % self.obd_addr )
         subprocess.call( ['sudo', 'hcitool', 'dc', self.obd_addr] )
         self.obd_addr = None
-        
+
     def stop( self ):
         #this feels ugly. there has to be a better way
         try:
@@ -56,7 +55,7 @@ class MaxOBD( object ):
             pass
         self.drop_bluetooth()
         logger.warning( "Bluetooth and OBD connections completely stopped." )
-    
+
     def set_watchers( self ):
         logger.info( "Setting watchers..." )
         self.con.watch( obd.commands.COOLANT_TEMP, force=True ) #, callback=self.new_coolant_temp)
@@ -67,32 +66,36 @@ class MaxOBD( object ):
         self.con.watch( obd.commands.TIMING_ADVANCE, force=True )
 
     def connect_bluetooth( self ):
-        if self.obd_addr is None:
-            if self.find_obd_device() is None:
-                logger.error( "Could not find OBD device." )
-                return False
-            else:
-                logger.info( "Found device: %s" % self.obd_addr )
-
         logger.info( "Connecting to %s at %s" % (self.obd_name, self.obd_addr) )
-        logger.info( "Running hcitool and rfcomm activation..." )
+        if self.obd_addr is None:
+            logger.error( "No device address given!? Bailing out" )
+            return False
+
+        ## old method, seems dumb
         subprocess.call( ['sudo', 'hcitool', 'cc', self.obd_addr] )
         subprocess.call( ['sudo', 'rfcomm', 'bind', '0', self.obd_addr] )
+        #socket = BluetoothSocket( RFCOMM )
+        #socket.connect((self.obd_addr,1))
         return True
     
     def connect_obd( self ):
         self.con = obd.Async()
+        time.sleep(2)
         if self.con.is_connected():
-            logger.info( "OBD Connection established." )
+            logger.info( "OBD Connection established. Starting services..." )
             self.set_watchers()
             self.con.start()
+            logger.info( "Services started" )
             return True
+        else:
+            logger.info( "OBD Connection failed" )
         return False
 
     def restart( self ):
         logger.warning( "Restarting..." )
         self.stop()
         time.sleep(1) # driver is buggy. this helps.
+        logger.info( "Stopped. Starting..." )
         self.start()
 
     def _clean_input( self, value ):
@@ -112,7 +115,7 @@ class MaxOBD( object ):
         obdlog.setLevel( logging.INFO )
         obdlog.addHandler( fhandler )
         obdlog.addHandler( shandler )
-        logger.info( "obd log loop started" )
+        logger.info( "OBD log loop started" )
 
         while True:
             try:
@@ -137,7 +140,7 @@ class MaxOBD( object ):
                 pass
             finally:
                 time.sleep( 1 )
-        logger.info( "obd log loop stopped" )
+        logger.info( "OBD log loop stopped" )
 
     def start( self ):
         ## start logging thread
@@ -148,8 +151,16 @@ class MaxOBD( object ):
             dev = self.find_obd_device()
             
             if dev is not None:
-                self.connect_bluetooth()
-                self.connect_obd()
+                logger.info( "Found %s device at: %s" % (self.obd_name, self.obd_addr) )
+                if self.connect_bluetooth():
+                    logger.info( "connect_bluetooth() succeeded" )
+                    if self.connect_obd():
+                        logger.info( "connect_obd() succeeded" )
+                    else:
+                        logger.info( "connect_obd() failed" )
+                else:
+                    print( "connect_bluetooth() failed. Restarting and trying again..." )
+                    self.stop()
             else:
                 logger.info( "Failed to find OBD device. Looping..." )
 

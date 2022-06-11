@@ -52,6 +52,5 @@ class Maxine(object):
         #tSounds.join()
         #printout() ## show logger tree
 
-
 m = Maxine()
 m.start()
