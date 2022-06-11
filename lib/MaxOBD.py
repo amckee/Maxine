@@ -84,17 +84,19 @@ class MaxOBD( object ):
     def start( self ):
         logthread = threading.Thread( target=self.obd_log_loop )
 
-        #self.con = obd.Async()
-        self.con = obd.OBD()
+        while True:
+            #self.con = obd.Async()
+            self.con = obd.OBD()
 
-        if self.con.is_connected():
-            logger.info( "OBD Connection established." )
-            logger.info( "Starting OBD thread logger")
-            logthread.start()
+            if self.con.is_connected():
+                logger.info( "OBD Connection established." )
+                logger.info( "Starting OBD thread logger")
+                logthread.start()
 
-            #self.set_watchers()
-            #self.con.start()
-        else:
-            logger.info( "Failed to find OBD device. Looping..." )
+                #self.set_watchers()
+                #self.con.start()
+            else:
+                logger.info( "Failed to find OBD device. Looping..." )
+            time.sleep( 5 )
 
         logger.info( "MaxOBD::start() finished" )
