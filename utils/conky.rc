@@ -1,0 +1,74 @@
+-- Config_Settings: http://conky.sourceforge.net/config_settings.html
+-- Config_Variables: http://conky.sourceforge.net/variables.html
+
+
+conky.config = {
+
+  -- Conky --
+
+  background = true,
+  update_interval = 1,
+  total_run_times = 0,  
+  cpu_avg_samples = 4,
+  net_avg_samples = 2,  
+  override_utf8_locale = true,  
+  double_buffer = true,
+  no_buffers = true,
+  imlib_cache_size=0,  
+  text_buffer_size = 2048,
+
+  -- Window --
+
+  own_window = true,
+  own_window_colour = '000000',
+  own_window_class = 'Conky',
+  own_window_argb_visual = true,
+  own_window_argb_count = 0,
+  own_window_argb_value = 0,
+  own_window_type = 'desktop',
+  own_window_transparent = true,
+  own_window_hints = 'undecorated,below,sticky,skip_taskbar,skip_pager',
+  border_inner_margin = 5,
+  border_width = 5,
+  minimum_height = 500,
+  minimum_width = 500,
+  maximum_width = 656,
+  alignment = 'top_left',
+  gap_x = 5,
+  gap_y = 5,
+
+  -- Graphics -- 
+
+  draw_shades = false,
+  draw_outline = false,
+  draw_borders = false,
+  draw_graph_borders = false,
+  
+  -- Text --
+
+  use_xft = true,
+  font = 'Ubuntu Regular',
+  xftalpha = 1,
+  uppercase = false,
+  pad_percents = 0,
+
+  -- Colors --
+
+  default_color = 'dddddd',
+  default_shade_color = '000000',
+  default_outline_color = '000000',
+
+};
+
+conky.text = [[
+
+${execpi 5 /home/pi/bin/Maxine/utils/conky.sh}
+
+
+
+
+
+${font mono:size=8}
+${tail /dev/shm/maxine.log 8}
+
+]]
