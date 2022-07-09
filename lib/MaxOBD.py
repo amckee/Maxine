@@ -84,7 +84,7 @@ class MaxOBD( object ):
         while True:
             #self.con = obd.Async()
             try:
-                self.con = obd.OBD()
+                self.con = obd.OBD( fast=False, timeout=30 )
 
                 if self.con.is_connected():
                     logger.info( "OBD Connection established." )

@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import obd
 
 logfile = "/dev/shm/jeep_obd.log"
