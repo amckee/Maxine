@@ -11,6 +11,10 @@ class MaxOBD( object ):
     con = None
 
     def __init__( self ):
+        if not os.path.exists( "/dev/rfcomm0" ):
+            proc = subprocess.Popen(['sudo', 'rfcomm', 'bind', 'rfcomm0', '88:1B:99:1D:1F:5E'])
+            logger.info( "Created rfcomm0 device" )
+
         logger.info( "OBD Started" )
 
     def set_watchers( self ):
@@ -84,7 +88,7 @@ class MaxOBD( object ):
         while True:
             #self.con = obd.Async()
             try:
-                self.con = obd.OBD( fast=False, timeout=30 )
+                self.con = obd.OBD()
 
                 if self.con.is_connected():
                     logger.info( "OBD Connection established." )
