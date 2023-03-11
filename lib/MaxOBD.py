@@ -98,9 +98,9 @@ class MaxOBD( object ):
                     #self.set_watchers()
                     #self.con.start()
                 else:
-                    logger.info( "Failed to find OBD device. Looping..." )
+                    logger.info( "Failed to connect to OBD device. Looping..." )
             except:
-                logger.info( "Something failed. Delaying next loop attempt 5s..." )
+                logger.info( "Connection failed. Delaying next loop attempt 5s..." )
             finally:
                 time.sleep( 5 )
 
