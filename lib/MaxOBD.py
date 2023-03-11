@@ -81,12 +81,8 @@ class MaxOBD( object ):
                 self.con = obd.OBD()
 
                 if self.con.is_connected():
-                    logger.info( "OBD Connection established." )
-                    logger.info( "Starting OBD thread logger")
+                    logger.info( "OBD Connection established.")
                     logthread.start()
-
-                    #self.set_watchers()
-                    #self.con.start()
                 else:
                     logger.info( "Failed to connect to OBD device. Looping..." )
             except:
