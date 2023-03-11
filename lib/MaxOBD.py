@@ -46,40 +46,30 @@ class MaxOBD( object ):
         logger.info( "OBD log loop started" )
 
         while True:
-            try:
-                mph = self.con.query( obd.commands.SPEED ).value.to('mph').magnitude
-                rpm = self.con.query( obd.commands.RPM ).value.magnitude
-                tps = format( self.con.query( obd.commands.THROTTLE_POS ).value.magnitude, '.2f' )
-                temp = self.con.query( obd.commands.COOLANT_TEMP ).value.to('degF').magnitude
-                volt = self.con.query( obd.commands.ELM_VOLTAGE ).value.magnitude
-                #fuel = self.con.query( obd.commands.FUEL_LEVEL ).value.magnitude ## not supported?
+            mph, rpm, tps, temp, volt = -1
 
-                ## Async version, if/when we get there...
-                # mph = self._clean_input( self.con.query( obd.commands.SPEED ).value.to('mph') )
-                # rpm = self._clean_input( self.con.query( obd.commands.RPM ) )
-                # tps = format( self._clean_input( self.con.query( obd.commands.THROTTLE_POS ) ), '.2f' )
-                # temp = self._clean_input( self.con.query( obd.commands.COOLANT_TEMP ).value.to('f') )
-                # volt = self._clean_input( self.con.query( obd.commands.ELM_VOLTAGE ) )
-                # fuel = self._clean_input( self.con.query( obd.commands.FUEL_LEVEL ) )
-                
-                obdlog.info( "%s,%s,%s,%s,%s" % (mph,rpm,tps,temp,volt) )
-            except ValueError as e:
-                if not con.is_connected():
-                    logger.info( "OBD is not connected. Sleeping 10s...." )
-                    time.sleep(10)
-                else:
-                    logger.error("ValueError Details:\n%s" % str(e) )
-                time.sleep( 30 )
-            except AttributeError as e:
-                logger.info( "No OBD connection. Sleeping 10s. Error is: %s" % e )
-                time.sleep( 10 )
-            except Exception as e:
-                logger.error( "General failure to pull OBD data. Unhandled error is:\n%s" % str(e) )
-                logger.info( "Sleeping 30s" )
-                time.sleep( 30 )
-                pass
-            finally:
-                time.sleep( 1 )
+            tmph = self.con.query( obd.commands.SPEED )
+            if tmph is not None:
+                mph = tmph.value.to('mph').magnitude
+
+            ttemp = self.con.query( obd.commands.COOLANT_TEMP )
+            if ttemp is not None:
+                temp = ttemp.value.to('degF').magnitude
+
+            trpm = self.con.query( obd.commands.RPM )
+            if trpm is not None:
+                rpm = trpm.value.magnitude
+            
+            ttps = self.con.query( obd.commands.THROTTLE_POS )
+            if ttps is not None:
+                tps = format( ttps.value.magnitude, '.2f' )
+            
+            tvolt = self.con.query( obd.commands.ELM_VOLTAGE )
+            if tvolt is not None:
+                volt = tvolt.value.magnitude
+
+            obdlog.info( "%s,%s,%s,%s,%s" % (mph,rpm,tps,temp,volt) )
+
         logger.info( "OBD log loop stopped" )
 
     def start( self ):
