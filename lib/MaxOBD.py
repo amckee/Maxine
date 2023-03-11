@@ -71,7 +71,7 @@ class MaxOBD( object ):
                     logger.error("ValueError Details:\n%s" % str(e) )
                 time.sleep( 30 )
             except AttributeError as e:
-                logger.info( "No OBD connection. Sleeping 10s..." )
+                logger.info( "No OBD connection. Sleeping 10s. Error is: %s" % e )
                 time.sleep( 10 )
             except Exception as e:
                 logger.error( "General failure to pull OBD data. Unhandled error is:\n%s" % str(e) )
