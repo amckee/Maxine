@@ -32,7 +32,7 @@ class FanControl(object):
 
     def start(self):
         self.controlFan( 0 ) #ensure fan is off before starting
-        logger.info("Initial temperature reading: %s" % self.getTemp())
+        logger.info("Initial PI temperature reading: %s" % self.getTemp())
         while True:
             self.controlFan( self.getTemp() )
             time.sleep( 1 )

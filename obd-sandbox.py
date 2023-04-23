@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import obd
 
-logfile = "/dev/shm/jeep_obd.log"
+logfile = "sandbox.log"
 
 print("Opening connection...")
 con = obd.OBD()

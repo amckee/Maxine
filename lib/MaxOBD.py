@@ -2,20 +2,20 @@ import obd, logging, os.path, subprocess, time, threading
 from serial.serialutil import SerialException
 from obd import OBDStatus
 
-## main logging mechanism
-logger = logging.getLogger( "maxine.obd" )
-
 class MaxOBD( object ):
     # Note to self: how to run a query
     # data = obd.OBD().query(obd.commands.SPEED).value.to('mph')
     con = None
+    obdlog = None
+    logger = logging.getLogger( "maxine.obd" )
 
     def __init__( self ):
-        if not os.path.exists( "/dev/rfcomm0" ):
-            proc = subprocess.Popen(['sudo', 'rfcomm', 'bind', 'rfcomm0', '88:1B:99:1D:1F:5E'])
-            logger.info( "Created rfcomm0 device" )
+        fhandler = logging.FileHandler( "/dev/shm/obdstat.dat", mode='a' )
+        fhandler.setFormatter( logging.Formatter( '%(asctime)s,%(message)s' ) )
 
-        logger.info( "OBD Started" )
+        self.obdlog = logging.getLogger( 'obdstat' )
+        self.obdlog.setLevel( logging.INFO )
+        self.obdlog.addHandler( fhandler )
 
     def set_watchers( self ):
         logger.info( "Setting watchers..." )
@@ -26,27 +26,9 @@ class MaxOBD( object ):
         self.con.watch( obd.commands.SPEED, force=True )
         self.con.watch( obd.commands.TIMING_ADVANCE, force=True )
 
-    def _clean_input( self, resp ):
-        #logger.info( "resp: %s" % resp )
-        if not resp.is_null():
-            return resp.magnitude
-        return 0
-    
     def obd_log_loop(self):
-        obdlog = logging.getLogger( 'obdstat' )
-        formatter = logging.Formatter( '%(asctime)s,%(message)s' )
-        fhandler = logging.FileHandler( "/dev/shm/obdstat.dat", mode='w' )
-        fhandler.setFormatter( formatter )
-        shandler = logging.StreamHandler()
-        shandler.setFormatter( formatter )
-        
-        obdlog.setLevel( logging.INFO )
-        obdlog.addHandler( fhandler )
-        obdlog.addHandler( shandler )
-        logger.info( "OBD log loop started" )
-
         while True:
-            mph, rpm, tps, temp, volt = -1
+            mph = rpm = tps = temp = volt = -1
 
             tmph = self.con.query( obd.commands.SPEED )
             if tmph is not None:
@@ -69,25 +51,23 @@ class MaxOBD( object ):
                 volt = tvolt.value.magnitude
 
             obdlog.info( "%s,%s,%s,%s,%s" % (mph,rpm,tps,temp,volt) )
+            time.sleep(1)
 
-        logger.info( "OBD log loop stopped" )
+        self.logger.info( "OBD log loop stopped" )
 
     def start( self ):
         logthread = threading.Thread( target=self.obd_log_loop )
 
         while True:
-            #self.con = obd.Async()
-            try:
-                self.con = obd.OBD()
+            self.con = obd.OBD()
 
-                if self.con.is_connected():
-                    logger.info( "OBD Connection established.")
-                    logthread.start()
-                else:
-                    logger.info( "Failed to connect to OBD device. Looping..." )
-            except:
-                logger.info( "Connection failed. Delaying next loop attempt 5s..." )
-            finally:
-                time.sleep( 5 )
+            if self.con.is_connected():
+                logthread.start()
+            else:
+                self.logger.error('Failed to connect to OBD device')
 
-        logger.info( "MaxOBD::start() finished" )
+            time.sleep( 5 )
+
+        if self.con is not None:
+            self.con.close()
+        self.logger.info( "MaxOBD::start() finished" )
