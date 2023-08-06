@@ -3,7 +3,7 @@
 #from lib import Security
 from lib import MaxOBD
 #from lib import Sounds
-#from lib import FanControl
+from lib import FanControl
 import threading, time, logging
 from subprocess import call
 

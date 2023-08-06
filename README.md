@@ -1,8 +1,6 @@
 Quickstart:
 - apt install portaudio19-dev libbluetooth-dev
-- pip3 install pyaudio
-- pip3 install obd
-- pip3 install pybluez
+- pip3 install pyaudio obd pybluez
 - python3 /path/to/Maxine.py
 - sudo ln -s /path/to/Maxine/etc/logrotate /etc/logrotate.d/maxine
 
